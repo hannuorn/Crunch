@@ -11,3 +11,4 @@ Deflate compression tool in Ada 2012.
 
 * [Weekly report #1](weekly/weekly1.md)
 * [Weekly report #2](weekly/weekly2.md)
+* [Weekly report #3](weekly/weekly3.md)
