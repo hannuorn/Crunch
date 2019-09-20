@@ -1,5 +1,12 @@
 ## Weekly report #3
 
+During the 3rd week I spent about 16 hours working on the project. 
+I developed the basics of Huffman routines and got started on unit testing
+and code commenting. I feel the project is lagging behind slightly at this stage,
+since the program cannot actually do much yet. Next week's plan is to achieve
+as much progress as possible on implementing the actual Deflate compression/decompression.
+
+
 ### Monday
 
 4 hours. Started writing code. Created the class Dynamic_Array, similar to Java's ArrayList.
@@ -38,4 +45,11 @@ Here you can enjoy an example of what the program can do at the moment.
     Goodbye.
 
 
+### Thursday & Friday
 
+6 hours. Reformatted the source code in package Utility.Dynamic_Arrays so
+as to conform to [Ada Style Guide](https://en.wikibooks.org/wiki/Ada_Style_Guide),
+including standardized comments on function specifications.
+
+I also wrote some unit tests for the same package using "pragma Assert".
+Assert throws exception Assertion_Error if the condition is false.
