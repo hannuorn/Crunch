@@ -14,6 +14,7 @@ with Ada.Text_IO; use Ada.Text_IO;
       
       begin
          Put_Line("Test_Crunch...");
+         Put_Line("Test_Dynamic_Arrays...");
          Test_Utility.Test_Dynamic_Arrays.Test;
       end Test_Crunch;
    
