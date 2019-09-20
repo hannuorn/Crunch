@@ -11,8 +11,8 @@ package Deflate is
    Empty_Bit_Array      : constant Bit_Array (1 .. 0) := (others => 0);
 
    package Dynamic_Bit_Arrays is new Utility.Dynamic_Arrays
-     (Component         => Bit, 
-      Index             => Natural, 
+     (Component_Type    => Bit,
+      Index_Type        => Natural,
       Fixed_Array       => Bit_Array,
       Empty_Fixed_Array => Empty_Bit_Array,
       Initial_Size      => 16);

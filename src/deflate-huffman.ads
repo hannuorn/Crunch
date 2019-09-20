@@ -4,15 +4,17 @@ with Ada.Finalization;
 generic
 
    type Symbol is (<>);
+   Max_Bit_Length       : Natural := 16;
+   
    
 package Deflate.Huffman is
 
    subtype Huffman_Code is Dynamic_Bit_Arrays.Dynamic_Array;
    type Dictionary is array (Symbol) of Huffman_Code;
-   type Bit_Length is new Natural range 0 .. 16;
+   type Bit_Length is new Natural range 0 .. Max_Bit_Length;
    type Bit_Lengths is array (Symbol range <>) of Bit_Length;
    type Naturals is array (Symbol range <>) of Natural;
-   type Huffman_Tree is private;
+   type Huffman_Tree is tagged private;
    
 
    function To_String
@@ -59,6 +61,15 @@ private
       record
          Root              : Huffman_Tree_Node_Access;
       end record;
+      
+   procedure Initialize
+     (Object            : in out Huffman_Tree);
+      
+   procedure Adjust
+     (Object            : in out Huffman_Tree);
+      
+   procedure Finalize
+     (Object            : in out Huffman_Tree);
       
 
 end Deflate.Huffman;

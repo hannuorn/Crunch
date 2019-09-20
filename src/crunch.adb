@@ -1,3 +1,6 @@
+pragma Assertion_Policy(Check);
+
+with Test_Utility.Test_Dynamic_Arrays;
 with Deflate; use Deflate;
 with Deflate.Huffman;
 with Deflate.Fixed_Huffman;
@@ -6,6 +9,14 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 
    procedure Crunch is
+   
+      procedure Test_Crunch is
+      
+      begin
+         Put_Line("Test_Crunch...");
+         Test_Utility.Test_Dynamic_Arrays.Test;
+      end Test_Crunch;
+   
    
       type Natural_Array is array (Natural range <>) of Natural;
       Empty_Natural_Array : constant Natural_Array (1 .. 0) := (others => 0);
@@ -28,13 +39,12 @@ with Ada.Text_IO; use Ada.Text_IO;
       Put_Line("Crunch");
       Put_Line("");
       Put_Line("Some dumb testing...");
-      for I in 1 .. 1000 loop
-         DA.Add(I);
-      end loop;
+      Test_Crunch;
+      Put_Line("");
       Put_Line("Demonstrating RFC 3.2.2.");
       Put_Line("Alphabet is ABCDEFGH");
       Put_Line("Building Huffman tree from bit lengths (3, 3, 3, 3, 3, 2, 4, 4)");
-      Build(HT, (3, 3, 3, 3, 3, 2, 4, 4));
+      HT.Build((3, 3, 3, 3, 3, 2, 4, 4));
       Put_Line("Codes in the tree:");
       Put_Line("");
       D := Code_Values(HT);
@@ -49,7 +59,7 @@ with Ada.Text_IO; use Ada.Text_IO;
       Put("Decoded string: ");
       
       loop
-         Find(HT, HC, Found, S);
+         HT.Find(HC, Found, S);
          exit when not Found;
          Put(Character(S));
          declare

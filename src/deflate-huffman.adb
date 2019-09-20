@@ -1,4 +1,62 @@
+with Ada.Unchecked_Deallocation;
+
+
 package body Deflate.Huffman is
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Huffman_Tree_Node, Huffman_Tree_Node_Access);
+     
+
+   procedure Initialize
+     (Object            : in out Huffman_Tree) is
+     
+   begin
+      null;
+   end Initialize;
+   
+   
+   procedure Adjust_Subtree
+     (Node              : in out Huffman_Tree_Node_Access) is
+   
+      N                 : Huffman_Tree_Node_Access;
+
+   begin
+      if Node /= null then
+         N := new Huffman_Tree_Node;
+         N.all := Node.all;
+         Adjust_Subtree(N.Edge_0);
+         Adjust_Subtree(N.Edge_1);
+         Node := N;
+      end if;
+   end Adjust_Subtree;
+   
+      
+   procedure Adjust
+     (Object            : in out Huffman_Tree) is
+     
+   begin
+      Adjust_Subtree(Object.Root);
+   end Adjust;
+      
+      
+   procedure Free_Subtree
+     (Node              : in out Huffman_Tree_Node_Access) is
+     
+   begin
+      if Node /= null then
+         Free_Subtree(Node.Edge_0);
+         Free_Subtree(Node.Edge_1);
+         Free(Node);
+      end if;
+   end Free_Subtree;
+   
+   
+   procedure Finalize
+     (Object            : in out Huffman_Tree) is
+     
+   begin
+      Free_Subtree(Object.Root);
+   end Finalize;
 
 
    function To_String
@@ -118,6 +176,7 @@ package body Deflate.Huffman is
       D                 : in     Dictionary) is
       
    begin
+      Free_Subtree(HT.Root);
       HT.Root := new Huffman_Tree_Node;
       HT.Root.Is_Leaf := FALSE;
       for S in D'Range loop
