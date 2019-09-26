@@ -6,8 +6,8 @@ package Deflate.Fixed_Huffman is
    type Literal_Length_Alphabet is new Natural range 0 .. 287;
    subtype Literal_Length_Symbol is Literal_Length_Alphabet range 0 .. 285;
    
-   package Fixed_Huffman_Codes is new Deflate.Huffman(Literal_Length_Alphabet);
-   use Fixed_Huffman_Codes;
+   package Literal_Length_Codes is new Deflate.Huffman(Literal_Length_Alphabet);
+   use Literal_Length_Codes;
    
    
    -- RFC 3.2.5
@@ -111,6 +111,10 @@ package Deflate.Fixed_Huffman is
       256 .. 279  => 7,
       280 .. 287  => 8);
       
-   Fixed_Huffman_Tree         : constant Huffman_Tree := Build(Fixed_Huffman_Bit_Lengths);
+   Fixed_Huffman_Tree         : constant Huffman_Tree := 
+                                    Build(Fixed_Huffman_Bit_Lengths);
+   
+   Fixed_Huffman_Dictionary   : constant Dictionary := 
+                                    Code_Values(Fixed_Huffman_Tree);
 
 end Deflate.Fixed_Huffman;

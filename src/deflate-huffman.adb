@@ -63,7 +63,7 @@ package body Deflate.Huffman is
      (Code              : in     Huffman_Code)
                           return String is
                           
-      S                 : String(1 .. Code.Length);
+      S                 : String(1 .. Integer(Code.Length));
       C                 : Bit_Array := Code.Get;
       I                 : Natural;
       
@@ -107,6 +107,37 @@ package body Deflate.Huffman is
    end Find;
 
 
+   procedure Find
+     (HT                : in     Huffman_Tree;
+      Stream            : in     Huffman_Code;
+      Counter           : in out Natural_64;
+      Found             : out    Boolean;
+      S                 : out    Symbol) is
+      
+      Node              : Huffman_Tree_Node_Access;
+      I                 : Natural_64;
+      
+   begin
+      Found := FALSE;
+      S := Symbol'First;
+      Node := HT.Root;
+      I := Counter;
+      loop
+         exit when Node = null or else Node.Is_Leaf;
+         case Stream.Get(Index => I) is
+            when 0 => Node := Node.Edge_0;
+            when 1 => Node := Node.Edge_1;
+         end case;
+         I := I + 1;
+      end loop;
+      if Node /= null and then Node.Is_Leaf then
+         Found := TRUE;
+         S := Node.S;
+         Counter := I;
+      end if;
+   end Find;
+
+
    -- Trivial conversion from Natural to an array of bits.
    function To_Huffman_Code
      (N                 : in     Natural;
@@ -114,7 +145,7 @@ package body Deflate.Huffman is
                           return Huffman_Code is
 
       X                 : Natural;
-      Bits              : Bit_Array(0 .. Natural(Bit_Length'Last));
+      Bits              : Bit_Array(0 .. Natural_64(Bit_Length'Last));
       I                 : Bit_Length;
       C                 : Huffman_Code;
       B                 : Bit;
@@ -124,7 +155,7 @@ package body Deflate.Huffman is
       I := 0;
       while X > 0 and I < Bit_Length'Last loop
          B := Bit(X mod 2);
-         Bits(Natural(I)) := B;
+         Bits(Natural_64(I)) := B;
          X := X / 2;
          I := I + 1;
       end loop;
@@ -135,7 +166,7 @@ package body Deflate.Huffman is
          C.Add(0);
       end loop;
       for K in 1 .. I loop
-         C.Add(Bits(Natural(I) - Natural(K)));
+         C.Add(Bits(Natural_64(I) - Natural_64(K)));
       end loop;
       return C;
    end To_Huffman_Code;

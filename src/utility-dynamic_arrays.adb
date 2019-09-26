@@ -139,7 +139,7 @@ package body Utility.Dynamic_Arrays is
    
    function Length
      (This              : in     Dynamic_Array)
-                          return Natural is
+                          return Natural_64 is
       
    begin
       return This.Length;
@@ -175,7 +175,7 @@ package body Utility.Dynamic_Arrays is
    
    
    function Get
-     (This              : in out Dynamic_Array;
+     (This              : in     Dynamic_Array;
       Index             : in     Index_Type)
                           return Component_Type is
       
@@ -206,8 +206,8 @@ package body Utility.Dynamic_Arrays is
    procedure Enlarge
      (This              : in out Dynamic_Array) is
       
-      Old_Size          : constant Natural := This.Data'Length;
-      New_Size          : Natural;
+      Old_Size          : constant Natural_64 := This.Data'Length;
+      New_Size          : Natural_64;
       New_Max_Index     : Index_Type;
       New_Data          : Fixed_Array_Access;
       
@@ -260,6 +260,25 @@ package body Utility.Dynamic_Arrays is
       This.Length := This.Length + 1;
       This.Data (This.Last) := Value;
    end Add;
+
+
+   procedure Add
+     (This              : in out Dynamic_Array;
+      Values            : in     Fixed_Array) is
       
-   
+   begin
+      for I in Values'Range loop
+         Add(This, Values(I));
+      end loop;
+   end Add;
+      
+
+   procedure Add
+     (This              : in out Dynamic_Array;
+      Values            : in     Dynamic_Array) is
+      
+   begin
+      Add(This, Get(Values));
+   end Add;
+
 end Utility.Dynamic_Arrays;

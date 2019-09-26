@@ -42,7 +42,7 @@ generic
    type Index_Type is range <>;
    type Fixed_Array is array (Index_Type range <>) of Component_Type;
    Empty_Fixed_Array    : Fixed_Array;
-   Initial_Size         : Natural := 0;
+   Initial_Size         : Natural_64 := 0;
 
    
 package Utility.Dynamic_Arrays is
@@ -87,7 +87,9 @@ package Utility.Dynamic_Arrays is
    ---------------------------------------------------------------------
    function Length
      (This              : in	 Dynamic_Array) 
-                          return Natural;
+                          return Natural_64
+      with
+         Post => Length'Result = This.Get'Length;
    
    
    ---------------------------------------------------------------------
@@ -138,7 +140,35 @@ package Utility.Dynamic_Arrays is
    ---------------------------------------------------------------------
    procedure Add
      (This              : in out Dynamic_Array;
-      Value             : in     Component_Type);
+      Value             : in     Component_Type)
+      
+      with
+         Post => This.Get(Index => This.Last) = Value;
+
+
+   ---------------------------------------------------------------------
+   -- Add
+   --
+   -- Purpose:
+   --    This procedure adds all of the values in Values to the
+   --    dynamic array.
+   --    
+   ---------------------------------------------------------------------
+   procedure Add
+     (This              : in out Dynamic_Array;
+      Values            : in     Fixed_Array)
+      
+      with
+         Post => This.Get(Index => This.Last) = Values(Values'Last);
+
+
+   procedure Add
+     (This              : in out Dynamic_Array;
+      Values            : in     Dynamic_Array)
+      
+      with
+         Post =>   This.Get(Index => This.Last) = 
+                 Values.Get(Index => Values.Last);
 
       
    ---------------------------------------------------------------------
@@ -149,11 +179,12 @@ package Utility.Dynamic_Arrays is
    --    The result is equal to Get(This)(Index).
    ---------------------------------------------------------------------
    function Get
-     (This              : in out Dynamic_Array;
+     (This              : in     Dynamic_Array;
       Index             : in     Index_Type) 
                           return Component_Type
       with 
-         Pre => Index in First(This) .. Last(This);
+         Pre => Index in First(This) .. Last(This),
+         Post => Get'Result = Fixed_Array(This.Get) (Index);
 
 
    ---------------------------------------------------------------------   
@@ -168,7 +199,8 @@ package Utility.Dynamic_Arrays is
       Value             : in	 Component_Type)
 
       with
-         Pre => Index in First(This) .. Last(This);
+         Pre => Index in First(This) .. Last(This),
+         Post => This.Get(Index => Index) = Value;
 
    
 private
@@ -178,7 +210,7 @@ private
    type Dynamic_Array is new Ada.Finalization.Controlled with
       record
          Data           : Fixed_Array_Access;
-         Length         : Natural;
+         Length         : Natural_64;
       end record;
    
    procedure Initialize

@@ -1,20 +1,25 @@
-with Utility.Dynamic_Arrays;
+with Utility;                    use Utility;
+with Utility.Bit_Arrays;         use Utility.Bit_Arrays;
 
 
 package Deflate is
 
-   type Bit is range 0 .. 1;
-   type Bit_Array is array (Natural range <>) of Bit
-      with Default_Component_Value => 0;
-   for Bit_Array'Component_Size use 1;
+   BFINAL_0                : constant Bit := 0;
+   BFINAL_1                : constant Bit := 1;
 
-   Empty_Bit_Array      : constant Bit_Array (1 .. 0) := (others => 0);
+   subtype BTYPE_Type is Bit_Array (0 .. 1);
+   BTYPE_No_Compression    : constant BTYPE_Type := (0, 0);
+   BTYPE_Fixed_Huffman     : constant BTYPE_Type := (0, 1);
+   BTYPE_Dynamic_Huffman   : constant BTYPE_Type := (1, 0);
 
-   package Dynamic_Bit_Arrays is new Utility.Dynamic_Arrays
-     (Component_Type    => Bit,
-      Index_Type        => Natural,
-      Fixed_Array       => Bit_Array,
-      Empty_Fixed_Array => Empty_Bit_Array,
-      Initial_Size      => 16);
+
+   procedure Compress
+     (Input             : in     Dynamic_Bit_Array;
+      Output            : out    Dynamic_Bit_Array);
+
+   procedure Decode_Deflate_Block
+     (Stream            : in     Dynamic_Bit_Array;
+      Counter           : in out Natural_64;
+      Output            : out    Dynamic_Bit_Array);
 
 end Deflate;

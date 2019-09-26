@@ -1,4 +1,5 @@
 with Ada.Finalization;
+with Utility.Bit_Arrays;         use Utility.Bit_Arrays;
 
 
 generic
@@ -9,7 +10,7 @@ generic
    
 package Deflate.Huffman is
 
-   subtype Huffman_Code is Dynamic_Bit_Arrays.Dynamic_Array;
+   subtype Huffman_Code is Dynamic_Bit_Array;
    type Dictionary is array (Symbol) of Huffman_Code;
    type Bit_Length is new Natural range 0 .. Max_Bit_Length;
    type Bit_Lengths is array (Symbol range <>) of Bit_Length;
@@ -29,6 +30,13 @@ package Deflate.Huffman is
    procedure Find
      (HT                : in     Huffman_Tree;
       Code              : in     Huffman_Code;
+      Found             : out    Boolean;
+      S                 : out    Symbol);
+      
+   procedure Find
+     (HT                : in     Huffman_Tree;
+      Stream            : in     Huffman_Code;
+      Counter           : in out Natural_64;
       Found             : out    Boolean;
       S                 : out    Symbol);
       
@@ -68,6 +76,7 @@ private
    procedure Adjust
      (Object            : in out Huffman_Tree);
       
+
    procedure Finalize
      (Object            : in out Huffman_Tree);
       
