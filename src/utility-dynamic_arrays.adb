@@ -85,6 +85,57 @@ package body Utility.Dynamic_Arrays is
    end Finalize;
 
 
+   ---------------------------------------------------------------------
+   -- Enlarge
+   --
+   -- Implementation Notes:
+   --    This procedure will not change the dynamic array from the
+   --    user's point of view. It just increases the storage space.
+   --    New size will be at least the equal to the argument Size.
+   --    If no Size argument is given, the following applies:
+   --    If the old size was 0, the new size will be 1.
+   --    Otherwise the new size is twice the old size.
+   ---------------------------------------------------------------------
+   procedure Enlarge
+     (This              : in out Dynamic_Array;
+      Size              : in     Natural_64 := 0) is
+      
+      Old_Size          : constant Natural_64 := This.Data'Length;
+      New_Size          : Natural_64;
+      New_Max_Index     : Index_Type;
+      New_Data          : Fixed_Array_Access;
+      
+   begin
+      if Size = 0 then
+         if Old_Size = 0 then
+            New_Size := 1;
+         else
+            New_Size := 2 * Old_Size;
+         end if;
+      else
+         New_Size := Natural_64'Max (2 * Old_Size, Size);
+      end if;
+      New_Max_Index := Index_Type'Val
+        (Index_Type'Pos(This.Data'First) + New_Size - 1);
+      New_Data := new Fixed_Array(This.Data'First .. New_Max_Index);
+      if not This.Is_Empty then
+         New_Data (This.First .. This.Last) := 
+            This.Data (This.First .. This.Last);
+      end if;
+      Free(This.Data);
+      This.Data := New_Data;
+   end Enlarge;
+
+
+   procedure Expect_Size
+     (This              : in out Dynamic_Array;
+      Size              : in     Natural_64) is
+      
+   begin
+      Enlarge(This, Size);
+   end Expect_Size;
+   
+
    function "="
      (Left              : in     Dynamic_Array;
       Right             : in     Dynamic_Array)
@@ -195,39 +246,6 @@ package body Utility.Dynamic_Arrays is
    
    
    ---------------------------------------------------------------------
-   -- Enlarge
-   --
-   -- Implementation Notes:
-   --    This procedure will not change the dynamic array from the
-   --    user's point of view. It just increases the storage space.
-   --    If the old size was 0, the new size will be 1.
-   --    Otherwise the new size is twice the old size.
-   ---------------------------------------------------------------------
-   procedure Enlarge
-     (This              : in out Dynamic_Array) is
-      
-      Old_Size          : constant Natural_64 := This.Data'Length;
-      New_Size          : Natural_64;
-      New_Max_Index     : Index_Type;
-      New_Data          : Fixed_Array_Access;
-      
-   begin
-      if Old_Size = 0 then
-         New_Data := new Fixed_Array (Index_Type'First .. Index_Type'First);
-      else
-         New_Size := 2 * Old_Size;
-         New_Max_Index := Index_Type'Val
-           (Index_Type'Pos(This.First) + New_Size - 1);
-         New_Data := new Fixed_Array(This.First .. New_Max_Index);
-         New_Data (This.First .. This.Last) := 
-            This.Data (This.First .. This.Last);
-      end if;
-      Free(This.Data);
-      This.Data := New_Data;
-   end Enlarge;
-
-
-   ---------------------------------------------------------------------
    -- No_Free_Space
    --
    -- Implementation Notes:
@@ -268,7 +286,7 @@ package body Utility.Dynamic_Arrays is
       
    begin
       for I in Values'Range loop
-         Add(This, Values(I));
+         Add(This, Values (I));
       end loop;
    end Add;
       
@@ -278,7 +296,7 @@ package body Utility.Dynamic_Arrays is
       Values            : in     Dynamic_Array) is
       
    begin
-      Add(This, Get(Values));
+      Add(This, Values.Get);
    end Add;
 
 end Utility.Dynamic_Arrays;

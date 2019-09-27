@@ -15,9 +15,7 @@ package body Deflate is
       
       use Utility.Bit_Arrays.Dynamic_Bit_Arrays;
       
-      In_Array          : Bit_Array := Input.Get;
       C_Input           : Natural_64 := Input.First;
-      C_Output          : Natural_64 := 0;
       B                 : Byte;
       
    begin
@@ -25,7 +23,8 @@ package body Deflate is
       -- BTYPE = fixed huffman
       -- block contents:
       -- don't bother trying to use length/distance,
-      -- just huffman literals.
+      -- just use huffman literals.
+      Output.Expect_Size(Input.Length);
       Add(Output, BFINAL_1);
       Add(Output, BTYPE_Fixed_Huffman);
       while C_Input <= Input.Last loop
@@ -42,16 +41,8 @@ package body Deflate is
       
       use type Dynamic_Bit_Array;
       
-      Decoded           : Dynamic_Bit_Array;
-      C_Output          : Natural_64;
-      
    begin
       Make_Single_Block_With_Fixed_Huffman(Input, Output);
-      Put_Line("Original size: " & Natural_64'Image(Input.Length/8));
-      Put_Line("Compressed size: " & Natural_64'Image(Output.Length/8));
-      C_Output := Output.First;
-      Decode_Deflate_Block(Output, C_Output, Decoded);
-      pragma Assert(Input = Decoded);
    end Compress;
 
 
@@ -71,12 +62,15 @@ package body Deflate is
       Read_Bit(Stream, Counter, BFINAL);
       Read(Stream, Counter, BTYPE);
       if BTYPE = BTYPE_No_Compression then
-         Skip_to_Next_Whole_Byte(Counter);
+         -- not yet implemented
+         --Skip_to_Next_Whole_Byte(Counter);
          --Read(Stream, Counter, 16, LEN);
          --Read(Stream, Counter, 16, NLEN);
          --copy LEN bytes o fdata to output
+         null;
       else
          if BTYPE = BTYPE_Dynamic_Huffman then
+            -- not yet implemented
             null;
          end if;
          loop
@@ -87,7 +81,7 @@ package body Deflate is
                elsif S = End_of_Block then
                   exit;
                else
-                  -- length/distance
+                  -- length/distance not yet implemented
                   null;
                end if;
             end if;

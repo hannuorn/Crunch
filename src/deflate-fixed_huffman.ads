@@ -3,7 +3,7 @@ with Deflate.Huffman;
 
 package Deflate.Fixed_Huffman is
 
-   type Literal_Length_Alphabet is new Natural range 0 .. 287;
+   type Literal_Length_Alphabet is range 0 .. 287;
    subtype Literal_Length_Symbol is Literal_Length_Alphabet range 0 .. 285;
    
    package Literal_Length_Codes is new Deflate.Huffman(Literal_Length_Alphabet);

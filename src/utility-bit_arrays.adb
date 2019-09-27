@@ -1,3 +1,6 @@
+with Ada.Unchecked_Conversion;
+
+
 package body Utility.Bit_Arrays is
 
 
@@ -5,15 +8,19 @@ package body Utility.Bit_Arrays is
      (B                 : in     Byte)
                           return Byte_Bits is
                           
-      X                 : Byte := B;
-      Bits              : Byte_Bits;
+      function Byte_To_Bits is new Ada.Unchecked_Conversion(Byte, Byte_Bits);
+      
+      -- X                 : Byte := B;
+      -- Bits              : Byte_Bits;
       
    begin
-      for I in Byte_Bits'Range loop
-         Bits(I) := Bit(X mod 2);
-         X := X/2;
-      end loop;
-      return Bits;
+      -- for I in Byte_Bits'Range loop
+         -- Bits(I) := Bit(X mod 2);
+         -- X := X/2;
+      -- end loop;
+      -- pragma Assert(Bits = Byte_To_Bits(B));
+      -- return Bits;
+      return Byte_to_Bits(B);
    end To_Bits;
    
    
@@ -21,15 +28,19 @@ package body Utility.Bit_Arrays is
      (Bits              : in     Byte_Bits)
                           return Byte is
                           
-      B                 : Byte := 0;
+      function Bits_to_Byte is new Ada.Unchecked_Conversion(Byte_Bits, Byte);
+                          
+      --B                 : Byte := 0;
 
    begin
-      for I in Bits'Range loop
-         if Bits(I) = 1 then
-            B := B + 2**Natural(I);
-         end if;
-      end loop;
-      return B;
+      -- for I in Bits'Range loop
+         -- if Bits(I) = 1 then
+            -- B := B + 2**Natural(I);
+         -- end if;
+      -- end loop;
+      -- pragma Assert(B = Bits_to_Byte(Bits));
+      -- return B;
+      return Bits_to_Byte(Bits);
    end To_Byte;
 
 

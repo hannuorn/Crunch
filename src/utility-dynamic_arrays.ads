@@ -50,6 +50,11 @@ package Utility.Dynamic_Arrays is
    type Dynamic_Array is tagged private;
    
    
+   procedure Expect_Size
+     (This              : in out Dynamic_Array;
+      Size              : in     Natural_64);
+      
+   
    function "="
      (Left              : in     Dynamic_Array;
       Right             : in     Dynamic_Array)

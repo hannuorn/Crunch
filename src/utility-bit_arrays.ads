@@ -3,9 +3,9 @@ with Utility.Dynamic_Arrays;
 
 package Utility.Bit_Arrays is
 
-   type Bit is range 0 .. 1;
+   type Bit is mod 2;
    for Bit'Size use 1;
-   type Byte is range 0 .. 255;
+   type Byte is mod 2**8;
    for Byte'Size use 8;
    
    type Bit_Array is array (Natural_64 range <>) of Bit
