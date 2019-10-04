@@ -1,4 +1,6 @@
 with Ada.Unchecked_Deallocation;
+with Ada.Text_IO; use Ada.Text_IO;
+with Utility.Binary_Search_Trees;
 
 
 package body Deflate.Huffman is
@@ -108,7 +110,7 @@ package body Deflate.Huffman is
 
 
    procedure Find
-     (HT                : in     Huffman_Tree;
+     (Tree              : in     Huffman_Tree;
       Stream            : in     Huffman_Code;
       Counter           : in out Natural_64;
       Found             : out    Boolean;
@@ -120,7 +122,7 @@ package body Deflate.Huffman is
    begin
       Found := FALSE;
       S := Symbol'First;
-      Node := HT.Root;
+      Node := Tree.Root;
       I := Counter;
       loop
          exit when Node = null or else Node.Is_Leaf;
@@ -173,7 +175,7 @@ package body Deflate.Huffman is
    
    
    procedure Add_to_Tree
-     (HT                : in out Huffman_Tree;
+     (Tree              : in out Huffman_Tree;
       S                 : in     Symbol;
       HC                : in     Huffman_Code) is
       
@@ -181,7 +183,7 @@ package body Deflate.Huffman is
       Node              : Huffman_Tree_Node_Access;
       
    begin
-      Node := HT.Root;
+      Node := Tree.Root;
       for B in C'Range loop
          pragma Assert(not Node.Is_Leaf);
          if C(B) = 0 then
@@ -203,15 +205,14 @@ package body Deflate.Huffman is
    
    
    procedure Build_Tree_From_Dictionary
-     (HT                : out    Huffman_Tree;
+     (Tree              : out    Huffman_Tree;
       D                 : in     Dictionary) is
       
    begin
-      Free_Subtree(HT.Root);
-      HT.Root := new Huffman_Tree_Node;
-      HT.Root.Is_Leaf := FALSE;
+      Tree.Root := new Huffman_Tree_Node;
+      Tree.Root.Is_Leaf := FALSE;
       for S in D'Range loop
-         Add_to_Tree(HT, S, D(S));
+         Add_to_Tree(Tree, S, D(S));
       end loop;
    end Build_Tree_From_Dictionary;
    
@@ -222,8 +223,8 @@ package body Deflate.Huffman is
 ------------------------------------------------------------------------
 
    procedure Build
-     (HT                : out    Huffman_Tree;
-      BL                : in     Bit_Lengths) is
+     (Tree              : out    Huffman_Tree;
+      Lengths           : in     Bit_Lengths) is
       
       type Bit_Length_Array is array (Bit_Length) of Natural;
       
@@ -237,8 +238,8 @@ package body Deflate.Huffman is
    begin
       -- 1) Count the number of codes for each code length.
       
-      for I in BL'Range loop
-         BL_Count(BL(I)) := BL_Count(BL(I)) + 1;
+      for I in Lengths'Range loop
+         BL_Count(Lengths(I)) := BL_Count(Lengths(I)) + 1;
       end loop;
       
       -- 2) Find the numerical value of the smallest code for each code length
@@ -253,7 +254,7 @@ package body Deflate.Huffman is
       
       -- 3) Assign numerical values to all codes
       for S in D'Range loop
-         Len := BL(S);
+         Len := Lengths(S);
          if Len /= 0 then
             D(S) := To_Huffman_Code(Next_Code(Len), Len);
             Next_Code(Len) := Next_Code(Len) + 1;
@@ -261,18 +262,47 @@ package body Deflate.Huffman is
       end loop;
 
       -- Convert the dictionary to a tree
-      Build_Tree_From_Dictionary(HT, D);
+      Build_Tree_From_Dictionary(Tree, D);
    end Build;
 
 
+   procedure Fill_in_Bit_Lengths
+     (BL                : in out Bit_Lengths;
+      Depth             : in     Bit_Length;
+      Node              : in     Huffman_Tree_Node_Access) is
+      
+   begin
+      if Node /= null then
+         if Node.Is_Leaf then
+            BL(Node.S) := Depth;
+         else
+            Fill_in_Bit_Lengths(BL, Depth + 1, Node.Edge_0);
+            Fill_in_Bit_Lengths(BL, Depth + 1, Node.Edge_1);
+         end if;
+      end if;
+   end Fill_in_Bit_Lengths;
+   
+
+   function Get_Bit_Lengths
+     (Tree              : in     Huffman_Tree)
+                          return Bit_Lengths is
+
+      BL                : Bit_Lengths(Symbol'Range) := (others => 0);
+      
+   begin
+      Fill_in_Bit_Lengths(BL, 0, Tree.Root);
+      return BL;
+   end Get_Bit_Lengths;
+
+
    function Build
-     (BL                : in     Bit_Lengths)
+     (Lengths           : in     Bit_Lengths)
                           return Huffman_Tree is
    
       HT                : Huffman_Tree;
       
    begin
-      Build(HT, BL);
+      Build(HT, Lengths);
       return HT;
    end Build;
    
@@ -301,17 +331,89 @@ package body Deflate.Huffman is
    end Fill_in_Dictionary;
 
 
-   function Code_Values
-     (HT                : in     Huffman_Tree)
+   function Get_Code_Values
+     (Tree              : in     Huffman_Tree)
                           return Dictionary is
       
       C                 : Huffman_Code;
       D                 : Dictionary;
       
    begin
-      Fill_in_Dictionary(D, HT.Root, C);
+      Fill_in_Dictionary(D, Tree.Root, C);
       return D;
-   end Code_Values;
+   end Get_Code_Values;
+
+
+   type Huffman_Build_Key is
+      record
+         Frequency      : Natural_64;
+         First_S        : Symbol;
+      end record;
+   
+   
+   function "<"
+     (Left, Right       : in     Huffman_Build_Key)
+                          return Boolean is
+
+   begin
+      if Left.Frequency = Right.Frequency then
+         return Left.First_S < Right.First_S;
+      else
+         return Left.Frequency < Right.Frequency;
+      end if;
+   end "<";
+   
+   
+   procedure Build
+     (Tree              : out    Huffman_Tree;
+      Frequencies       : in     Symbol_Frequencies) is
+
+      package Sorted_Lists is new Binary_Search_Trees
+        (Huffman_Build_Key, Huffman_Tree_Node_Access, "<", "=");
+
+      
+      List              : Sorted_Lists.Binary_Search_Tree;
+      Key_0             : Huffman_Build_Key;
+      Key_1             : Huffman_Build_Key;
+      Node_0            : Huffman_Tree_Node_Access;
+      Node_1            : Huffman_Tree_Node_Access;
+      N                 : Huffman_Tree_Node_Access;
+      
+   begin
+      Put_Line("Counting symbol frequencies");
+      for S in Frequencies'Range loop
+         if Frequencies(S) > 0 then
+            N := new Huffman_Tree_Node;
+            N.all :=
+                 (Is_Leaf  => TRUE,
+                  S        => S,
+                  Edge_0   => null,
+                  Edge_1   => null);
+            List.Put
+                 (Key   => (Frequency => Frequencies(S), First_S => S),
+                  Value => N);
+         end if;
+      end loop;
+      Put_Line("Found " & Natural_64'Image(List.Size) & " symbols.");
+      Put_Line("Creating Huffman tree...");
+      while List.Size >= 2 loop
+         List.Get_First(Key_0, Node_0);
+         List.Remove(Key_0);
+         List.Get_First(Key_1, Node_1);
+         List.Remove(Key_1);
+         N := new Huffman_Tree_Node;
+         N.all :=
+              (Is_Leaf  => FALSE,
+               S        => Symbol'First,
+               Edge_0   => Node_0,
+               Edge_1   => Node_1);
+         List.Put
+              (Key   => (Frequency => Key_0.Frequency + Key_1.Frequency,
+                         First_S => Key_0.First_S),
+               Value => N);
+      end loop;
+      Tree.Root := N;
+   end Build;
 
 
 end Deflate.Huffman;

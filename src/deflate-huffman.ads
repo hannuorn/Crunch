@@ -1,3 +1,23 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
+ 
+------------------------------------------------------------------------
+--
+-- package Deflate.Huffman
+-- 
+-- Purpose:
+--    This generic package implements Huffman codes for 
+--    a given alphabet.
+--
+------------------------------------------------------------------------
+
 with Ada.Finalization;
 with Utility.Bit_Arrays;         use Utility.Bit_Arrays;
 
@@ -15,6 +35,9 @@ package Deflate.Huffman is
    type Bit_Length is new Natural range 0 .. Max_Bit_Length;
    type Bit_Lengths is array (Symbol range <>) of Bit_Length;
    type Naturals is array (Symbol range <>) of Natural;
+   type Symbol_Frequencies is array (Symbol range <>) of Natural_64
+      with Default_Component_Value => 0;
+
    type Huffman_Tree is tagged private;
    
 
@@ -22,35 +45,49 @@ package Deflate.Huffman is
      (Code              : in     Huffman_Code)
                           return String;
                           
-   function To_Huffman_Code
-     (N                 : in     Natural;
-      Length            : in     Bit_Length)
-                          return Huffman_Code;
+   ---------------------------------------------------------------------
+   -- To_Huffman_Code
+   --
+   -- Purpose:
+   --    This function returns an image of code, e.g. "00101".
+   ---------------------------------------------------------------------
+--   function To_Huffman_Code
+--     (N                 : in     Natural;
+--      Length            : in     Bit_Length)
+--                          return Huffman_Code;
    
-   procedure Find
-     (HT                : in     Huffman_Tree;
-      Code              : in     Huffman_Code;
-      Found             : out    Boolean;
-      S                 : out    Symbol);
+--   procedure Find
+--     (HT                : in     Huffman_Tree;
+--      Code              : in     Huffman_Code;
+--      Found             : out    Boolean;
+--      S                 : out    Symbol);
       
    procedure Find
-     (HT                : in     Huffman_Tree;
+     (Tree              : in     Huffman_Tree;
       Stream            : in     Huffman_Code;
       Counter           : in out Natural_64;
       Found             : out    Boolean;
       S                 : out    Symbol);
       
    procedure Build
-     (HT                : out    Huffman_Tree;
-      BL                : in     Bit_Lengths);
+     (Tree              : out    Huffman_Tree;
+      Lengths           : in     Bit_Lengths);
       
    function Build
-     (BL                : in     Bit_Lengths)
+     (Lengths           : in     Bit_Lengths)
                           return Huffman_Tree;
-                          
-   function Code_Values
-     (HT                : in     Huffman_Tree)
+
+   function Get_Bit_Lengths
+     (Tree              : in     Huffman_Tree)
+                          return Bit_Lengths;
+
+   function Get_Code_Values
+     (Tree              : in     Huffman_Tree)
                           return Dictionary;
+
+   procedure Build
+     (Tree              : out    Huffman_Tree;
+      Frequencies       : in     Symbol_Frequencies);
    
    
 private

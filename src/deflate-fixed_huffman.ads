@@ -115,6 +115,6 @@ package Deflate.Fixed_Huffman is
                                     Build(Fixed_Huffman_Bit_Lengths);
    
    Fixed_Huffman_Dictionary   : constant Dictionary := 
-                                    Code_Values(Fixed_Huffman_Tree);
+                                    Get_Code_Values(Fixed_Huffman_Tree);
 
 end Deflate.Fixed_Huffman;

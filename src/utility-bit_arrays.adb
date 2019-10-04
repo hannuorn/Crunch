@@ -114,12 +114,15 @@ package body Utility.Bit_Arrays is
       Last              : constant Natural_64 := Natural_64'Min
                            (Counter + 8 - 1, Stream.Last);
       BB                : Byte_Bits := (others => 0);
+      C                 : Natural_64;
       
    begin
+      C := Counter;
       for I in Counter .. Last loop
-         BB(Counter + 7 - I) := Stream.Get(Index => Counter);
+         BB(Counter + 7 - I) := Stream.Get(Index => C);
+         C := C + 1;
       end loop;
-      Counter := Last + 1;
+      Counter := C;
       Result := To_Byte(BB);
    end Read_Byte;
    

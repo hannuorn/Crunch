@@ -35,6 +35,42 @@ package body Deflate is
    end Make_Single_Block_With_Fixed_Huffman;
    
    
+   procedure Test_Huffman_Coding
+     (Input             : in     Dynamic_Bit_Array) is
+   
+      package Byte_Huffman is new Deflate.Huffman (Utility.Bit_Arrays.Byte);
+      use Byte_Huffman;
+      
+      use Utility.Bit_Arrays.Dynamic_Bit_Arrays;
+      
+      C                 : Natural_64 := Input.First;
+      B                 : Byte;
+      Freq              : Byte_Huffman.Symbol_Frequencies(Byte);
+      HT                : Byte_Huffman.Huffman_Tree;
+      D                 : Byte_Huffman.Dictionary;
+      
+   begin
+      C := Input.First;
+      while C <= Input.Last loop
+         Read_Byte(Input, C, B);
+         Freq(B) := Freq(B) + 1;
+      end loop;
+      Build(HT, Freq);
+      
+      D := Get_Code_Values(HT);
+      Put_Line("Huffman codes:");
+      for S in D'Range loop
+         if Freq(S) > 0 then
+            Put(Byte'Image(S) & " = '" & Character'Val(S) & "'");
+            Put_Line(" = " & To_String(D(S)) & ", freq =" & 
+                       Natural_64'Image(Freq(S)) & 
+                    ", bit length = " & Natural_64'Image(D(S).Length));
+         end if;
+      end loop;
+      Put_Line("");
+   end Test_Huffman_Coding;
+   
+         
    procedure Compress
      (Input             : in     Dynamic_Bit_Array;
       Output            : out    Dynamic_Bit_Array) is
@@ -42,6 +78,7 @@ package body Deflate is
       use type Dynamic_Bit_Array;
       
    begin
+      Test_Huffman_Coding(Input);
       Make_Single_Block_With_Fixed_Huffman(Input, Output);
    end Compress;
 
@@ -92,5 +129,4 @@ package body Deflate is
       end if;
    end Decode_Deflate_Block;
    
-
 end Deflate;
