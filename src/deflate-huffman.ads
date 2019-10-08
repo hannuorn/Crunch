@@ -56,12 +56,19 @@ package Deflate.Huffman is
 --      Length            : in     Bit_Length)
 --                          return Huffman_Code;
    
---   procedure Find
---     (HT                : in     Huffman_Tree;
---      Code              : in     Huffman_Code;
---      Found             : out    Boolean;
---      S                 : out    Symbol);
+   procedure Find
+     (HT                : in     Huffman_Tree;
+      Code              : in     Huffman_Code;
+      Found             : out    Boolean;
+      S                 : out    Symbol);
       
+   ------------------------------------------------------------------------
+   -- Find
+   --
+   -- Purpose:
+   --    Read and decode the next code in a data stream.
+   --    Increase the counter accordingly.
+   ------------------------------------------------------------------------
    procedure Find
      (Tree              : in     Huffman_Tree;
       Stream            : in     Huffman_Code;
@@ -69,22 +76,50 @@ package Deflate.Huffman is
       Found             : out    Boolean;
       S                 : out    Symbol);
       
+   ------------------------------------------------------------------------
+   -- Build
+   --
+   -- Purpose:
+   --    Build the Huffman tree from an array of code lengths
+   --    as per RFC 1951, 3.2.2.
+   ------------------------------------------------------------------------
    procedure Build
      (Tree              : out    Huffman_Tree;
       Lengths           : in     Bit_Lengths);
-      
-   function Build
-     (Lengths           : in     Bit_Lengths)
-                          return Huffman_Tree;
 
+   ------------------------------------------------------------------------
+   -- Get_Bit_Lengths
+   --
+   -- Purpose:
+   --    This function is the reverse of procedure Build above,
+   --    returning an array of bit lengths given a Huffman Tree.
+   ------------------------------------------------------------------------
    function Get_Bit_Lengths
      (Tree              : in     Huffman_Tree)
                           return Bit_Lengths;
 
+   function Build
+     (Lengths           : in     Bit_Lengths)
+                          return Huffman_Tree;
+
+   ------------------------------------------------------------------------
+   -- Get_Code_Values
+   --
+   -- Purpose:
+   --    This function returns the dictionary,
+   --    an array describing a code for each symbol.
+   ------------------------------------------------------------------------
    function Get_Code_Values
      (Tree              : in     Huffman_Tree)
                           return Dictionary;
 
+   ------------------------------------------------------------------------
+   -- Build
+   --
+   -- Purpose:
+   --    This procedure builds an optimal Huffman code
+   --    given the frequency of each symbol.
+   ------------------------------------------------------------------------
    procedure Build
      (Tree              : out    Huffman_Tree;
       Frequencies       : in     Symbol_Frequencies);

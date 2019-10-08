@@ -1,3 +1,28 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
+ 
+------------------------------------------------------------------------
+--
+-- package Deflate.Huffman
+-- 
+-- Implementation Notes:
+--    This generic package implements Huffman codes for 
+--    a given alphabet.
+--
+-- References:
+--    * RFC 1951, 
+--       DEFLATE Compressed Data Format Specification version 1.3
+--    * Wikipedia: Huffman coding
+--
+------------------------------------------------------------------------
+
 with Ada.Unchecked_Deallocation;
 with Ada.Text_IO; use Ada.Text_IO;
 with Utility.Binary_Search_Trees;
@@ -216,10 +241,13 @@ package body Deflate.Huffman is
       end loop;
    end Build_Tree_From_Dictionary;
    
-   
+
 ------------------------------------------------------------------------
---    Build the Huffman tree from a sequence of bit lenghts
---    as described in RFC 3.2.2
+-- Build
+--
+-- Implementation Notes:
+--    This procedure builds the Huffman tree using a sequence 
+--    of bit lenghts as described in RFC 1951 3.2.2.
 ------------------------------------------------------------------------
 
    procedure Build
@@ -267,17 +295,17 @@ package body Deflate.Huffman is
 
 
    procedure Fill_in_Bit_Lengths
-     (BL                : in out Bit_Lengths;
+     (Lengths           : in out Bit_Lengths;
       Depth             : in     Bit_Length;
       Node              : in     Huffman_Tree_Node_Access) is
       
    begin
       if Node /= null then
          if Node.Is_Leaf then
-            BL(Node.S) := Depth;
+            Lengths(Node.S) := Depth;
          else
-            Fill_in_Bit_Lengths(BL, Depth + 1, Node.Edge_0);
-            Fill_in_Bit_Lengths(BL, Depth + 1, Node.Edge_1);
+            Fill_in_Bit_Lengths(Lengths, Depth + 1, Node.Edge_0);
+            Fill_in_Bit_Lengths(Lengths, Depth + 1, Node.Edge_1);
          end if;
       end if;
    end Fill_in_Bit_Lengths;
@@ -364,13 +392,22 @@ package body Deflate.Huffman is
    end "<";
    
    
+------------------------------------------------------------------------
+-- Build
+--
+-- Implementation Notes:
+--    This procedure builds an optimal Huffman code
+--    given the frequency of each symbol.
+--
+--    Refer to Wikipedia: Huffman coding, chapter 'Basic technique'.
+------------------------------------------------------------------------
+
    procedure Build
      (Tree              : out    Huffman_Tree;
       Frequencies       : in     Symbol_Frequencies) is
 
       package Sorted_Lists is new Binary_Search_Trees
         (Huffman_Build_Key, Huffman_Tree_Node_Access, "<", "=");
-
       
       List              : Sorted_Lists.Binary_Search_Tree;
       Key_0             : Huffman_Build_Key;
@@ -380,7 +417,6 @@ package body Deflate.Huffman is
       N                 : Huffman_Tree_Node_Access;
       
    begin
-      Put_Line("Counting symbol frequencies");
       for S in Frequencies'Range loop
          if Frequencies(S) > 0 then
             N := new Huffman_Tree_Node;
@@ -394,12 +430,12 @@ package body Deflate.Huffman is
                   Value => N);
          end if;
       end loop;
-      Put_Line("Found " & Natural_64'Image(List.Size) & " symbols.");
-      Put_Line("Creating Huffman tree...");
       while List.Size >= 2 loop
-         List.Get_First(Key_0, Node_0);
+         Key_0 := List.First;
+         Node_0 := List.Get(Key_0);
          List.Remove(Key_0);
-         List.Get_First(Key_1, Node_1);
+         Key_1 := List.First;
+         Node_1 := List.Get(Key_1);
          List.Remove(Key_1);
          N := new Huffman_Tree_Node;
          N.all :=

@@ -1,23 +1,28 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--
+-- package Utility.Binary_Search_Trees.Red_Black_Trees
+--
+-- Purpose:
+--    This private child package implements the Red-Black Tree.
+--
+------------------------------------------------------------------------
+
 private generic package Utility.Binary_Search_Trees.Red_Black_Trees is
 
-   function Copy_of_Subtree
-     (From              : in     RB_Node_Access;
-      Parent            : in     RB_Node_Access := null)
-                          return RB_Node_Access;
-
-   procedure Free_Subtree
-     (Node              : in out RB_Node_Access);
-     
    function RB_Find
      (Root              : in     RB_Node_Access;
       Key               : in     Key_Type)
                           return RB_Node_Access;
-     
-   function RB_Node_Create
-     (Key               : in     Key_Type;
-      Value             : in     Element_Type)
-                          return RB_Node_Access;
-
 
    function RB_First
      (Z                 : in     RB_Node_Access)
@@ -36,6 +41,11 @@ private generic package Utility.Binary_Search_Trees.Red_Black_Trees is
       Z                 : in out RB_Node_Access);
 
    function RB_Next
+     (Root              : in     RB_Node_Access;
+      Key               : in     Key_Type)
+                          return RB_Node_Access;
+
+   function RB_Previous
      (Root              : in     RB_Node_Access;
       Key               : in     Key_Type)
                           return RB_Node_Access;

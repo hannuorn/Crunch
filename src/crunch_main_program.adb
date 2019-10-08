@@ -1,3 +1,24 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
+ 
+------------------------------------------------------------------------
+--
+-- package Crunch_Main_Program
+-- 
+-- Implementation Notes:
+--    This package implements the main program of Crunch,
+--    including handling of command line parameters and 
+--    input/output files.
+--
+------------------------------------------------------------------------
+
 with Ada.Calendar;            use Ada.Calendar;
 with Ada.Command_Line;        use Ada.Command_Line;
 with Ada.Direct_IO;

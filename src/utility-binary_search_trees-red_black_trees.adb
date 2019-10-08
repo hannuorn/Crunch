@@ -20,7 +20,7 @@
 --       Third Edition. MIT Press.
 --
 --    The procedures in this package have been written to
---    closely match the pseudo-code routines in the book.
+--    closely match the routines in the book.
 ------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
@@ -28,61 +28,7 @@ with Ada.Unchecked_Deallocation;
 
 package body Utility.Binary_Search_Trees.Red_Black_Trees is
 
-   procedure Free is new Ada.Unchecked_Deallocation
-      (RB_Node, RB_Node_Access);
       
-      
-   function Copy_of_Subtree
-     (From              : in     RB_Node_Access;
-      Parent            : in     RB_Node_Access := null)
-                          return RB_Node_Access is
-      
-      N                 : RB_Node_Access;
-      
-   begin
-      if From /= null then
-         N := new RB_Node;
-         N.all :=
-           (P        => Parent,
-            Left     => Copy_of_Subtree(From => From.Left, Parent => N),
-            Right    => Copy_of_Subtree(From => From.Right, Parent => N),
-            Color    => From.Color,
-            Count    => From.Count,
-            Key      => From.Key,
-            Value    => From.Value);
-      end if;
-      return N;
-   end Copy_of_Subtree;
-
-
-   procedure Free_Subtree
-     (Node              : in out RB_Node_Access) is
-     
-   begin
-      if Node /= null then
-         Free_Subtree(Node.Left);
-         Free_Subtree(Node.Right);
-         Free(Node);
-      end if;
-   end Free_Subtree;
-
-
-   function RB_Node_Create
-     (Key               : in     Key_Type;
-      Value             : in     Element_Type)
-                          return RB_Node_Access is
-
-      X                 : RB_Node_Access;
-      
-   begin
-      X := new RB_Node;
-      X.Count := 1;
-      X.Key := Key;
-      X.Value := Value;
-      return X;
-   end RB_Node_Create;
-
-
    function Subtree_Size
      (X                 : in     RB_Node_Access)
                           return Natural_64 is
@@ -141,6 +87,8 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
       Y.Left := X;
       X.P := Y;
       
+      -- Order matters when updating the counts;
+      -- lower node, X, comes first.
       Update_Count(X);
       Update_Count(Y);
    end Left_Rotate;
@@ -175,6 +123,8 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
       X.Right := Y;
       Y.P := X;
 
+      -- Order matters when updating the counts;
+      -- lower node, Y, comes first.
       Update_Count(Y);
       Update_Count(X);
    end Right_Rotate;
@@ -189,7 +139,7 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
    --       13.1 Properties of red-black trees
    --
    --    The book uses a single 'sentinel node' to represent NIL.
-   --    Its color attribute is BLACK and its other attributes
+   --    Its color attribute is Black and its other attributes
    --    can take on arbitrary values.
    --
    --    This implementation does not refer to a 'sentinel'.
@@ -408,15 +358,11 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
 
 
    ---------------------------------------------------------------------
-   -- RB_Transplant
-   -- RB_Delete_Fixup
-   -- RB_Delete
+   -- Iterative_Update_Count
    --
-   -- Implementation Notes:
-   --    Introduction to Algorithms
-   --       13.4 Deletion
+   -- Purpose:
+   --    Update the node counter of a node and all of its ancestors.
    ---------------------------------------------------------------------
-   
    procedure Iterative_Update_Count
      (Z                 : in     RB_Node_Access) is
      
@@ -429,6 +375,16 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
       end loop;
    end Iterative_Update_Count;
    
+   
+   ---------------------------------------------------------------------
+   -- RB_Transplant
+   -- RB_Delete_Fixup
+   -- RB_Delete
+   --
+   -- Implementation Notes:
+   --    Introduction to Algorithms
+   --       13.4 Deletion
+   ---------------------------------------------------------------------
    
    procedure RB_Transplant
      (Root              : in out RB_Node_Access;
@@ -622,5 +578,26 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
       return Lowest;
    end RB_Next;
 
-   
+
+   function RB_Previous
+     (Root              : in     RB_Node_Access;
+      Key               : in     Key_Type)
+                          return RB_Node_Access is
+
+      X                 : RB_Node_Access := Root;
+      Highest           : RB_Node_Access;
+      
+   begin
+      while X /= null loop
+         if Key < X.Key or Key = X.Key then
+            X := X.Left;
+         else
+            Highest := X;
+            X := X.Right;
+         end if;
+      end loop;
+      return Highest;
+   end RB_Previous;
+
+
 end Utility.Binary_Search_Trees.Red_Black_Trees;

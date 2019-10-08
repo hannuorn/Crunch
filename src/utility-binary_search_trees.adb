@@ -1,12 +1,75 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--
+-- package Utility.Binary_Search_Trees
+-- 
+-- Implementation Notes:
+--    This package implements a simple binary tree interface.
+--    The actual tree algorithms can be found in a child package.
+--    
+------------------------------------------------------------------------
+
+with Ada.Unchecked_Deallocation;
 with Utility.Binary_Search_Trees.Red_Black_Trees;
+with Utility.Binary_Search_Trees.Test;
 
 
 package body Utility.Binary_Search_Trees is
 
    package RB_Trees is new Utility.Binary_Search_Trees.Red_Black_Trees;
    use RB_Trees;
+   
+   package RB_Test is new Utility.Binary_Search_Trees.Test;
+   use RB_Test;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+      (RB_Node, RB_Node_Access);
+      
+
+   function Copy_of_Subtree
+     (From              : in     RB_Node_Access;
+      Parent            : in     RB_Node_Access := null)
+                          return RB_Node_Access is
+      
+      N                 : RB_Node_Access;
+      
+   begin
+      if From /= null then
+         N := new RB_Node;
+         N.all :=
+           (P        => Parent,
+            Left     => Copy_of_Subtree(From => From.Left, Parent => N),
+            Right    => Copy_of_Subtree(From => From.Right, Parent => N),
+            Color    => From.Color,
+            Count    => From.Count,
+            Key      => From.Key,
+            Value    => From.Value);
+      end if;
+      return N;
+   end Copy_of_Subtree;
 
 
+   procedure Free_Subtree
+     (Node              : in out RB_Node_Access) is
+     
+   begin
+      if Node /= null then
+         Free_Subtree(Node.Left);
+         Free_Subtree(Node.Right);
+         Free(Node);
+      end if;
+   end Free_Subtree;
+   
+   
    procedure Initialize
      (Object            : in out Binary_Search_Tree) is
      
@@ -80,6 +143,22 @@ package body Utility.Binary_Search_Trees is
    end Get;
    
 
+   function Create_Node
+     (Key               : in     Key_Type;
+      Value             : in     Element_Type)
+                          return RB_Node_Access is
+
+      X                 : RB_Node_Access;
+      
+   begin
+      X := new RB_Node;
+      X.Count := 1;
+      X.Key := Key;
+      X.Value := Value;
+      return X;
+   end Create_Node;
+
+
    procedure Add
      (This              : in out Binary_Search_Tree;
       Key               : in     Key_Type;
@@ -93,7 +172,7 @@ package body Utility.Binary_Search_Trees is
          OK := FALSE;
       else
          OK := TRUE;
-         X := RB_Node_Create(Key, Value);
+         X := Create_Node(Key, Value);
          RB_Insert(This.Root, X);
       end if;
    end Add;
@@ -127,6 +206,7 @@ package body Utility.Binary_Search_Trees is
       X := RB_Find(This.Root, Key);
       if X /= null then
          RB_Delete(This.Root, X);
+         Free(X);
       end if;
    end Remove;
    
@@ -189,6 +269,19 @@ package body Utility.Binary_Search_Trees is
    end Next;
    
    
+   function Previous
+     (This              : in     Binary_Search_Tree;
+      Key               : in     Key_Type)
+                          return Key_Type is
+
+      X                 : RB_Node_Access;
+      
+   begin
+      X := RB_Previous(This.Root, Key);
+      return X.Key;
+   end Previous;
+   
+   
    procedure Find_First
      (This              : in     Binary_Search_Tree;
       First             : out    Key_Type;
@@ -224,5 +317,13 @@ package body Utility.Binary_Search_Trees is
       end if;
    end Find_Next;
 
+
+   procedure Verify
+     (This              : in     Binary_Search_Tree) is
+      
+   begin
+      Verify_Counters(This.Root);
+      Verify_Red_Black_Properties(This.Root);
+   end Verify;
 
 end Utility.Binary_Search_Trees;

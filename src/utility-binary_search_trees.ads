@@ -176,13 +176,13 @@ package Utility.Binary_Search_Trees is
       with
          Pre => not This.Is_Empty;
    
-   procedure Get_First
-     (This              : in     Binary_Search_Tree;
-      Key               : out    Key_Type;
-      Value             : out    Element_Type)
+   -- procedure Get_First
+     -- (This              : in     Binary_Search_Tree;
+      -- Key               : out    Key_Type;
+      -- Value             : out    Element_Type)
       
-      with
-         Pre => not This.Is_Empty;
+      -- with
+         -- Pre => not This.Is_Empty;
 
 
    function Last
@@ -199,6 +199,13 @@ package Utility.Binary_Search_Trees is
          Post => Is_Last'Result = (Key = This.Last);
          
    function Next
+     (This              : in     Binary_Search_Tree;
+      Key               : in     Key_Type)
+                          return Key_Type
+      with
+         Pre => not This.Is_Empty;
+   
+   function Previous
      (This              : in     Binary_Search_Tree;
       Key               : in     Key_Type)
                           return Key_Type
@@ -225,6 +232,18 @@ package Utility.Binary_Search_Trees is
       Key               : in out Key_Type;
       Found             : out    Boolean);  
    
+   ---------------------------------------------------------------------
+   -- Verify
+   --
+   -- Purpose:
+   --    For testing purposes only. This procedure will verify the
+   --    integrity of the data structure.
+   -- Exceptions:
+   --    Assertion_Error
+   ---------------------------------------------------------------------
+   procedure Verify
+     (This              : in     Binary_Search_Tree);
+      
    
 private
 

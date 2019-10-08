@@ -1,4 +1,6 @@
+with Ada.Text_IO;                use Ada.Text_IO;
 with Utility.Bit_Arrays;
+with Utility.Dynamic_Arrays;
 with Deflate.Huffman;
 
 
@@ -61,7 +63,7 @@ package body Deflate.Demo is
       Put_Line("Demonstrating RFC 3.2.2.");
       Put_Line("Alphabet is ABCDEFGH");
       Put_Line("Building Huffman tree from bit lengths (3, 3, 3, 3, 3, 2, 4, 4)");
-      HT.Build(BL => (3, 3, 3, 3, 3, 2, 4, 4));
+      HT.Build(Lengths => (3, 3, 3, 3, 3, 2, 4, 4));
       Put_Line("Codes in the tree:");
       Put_Line("");
       D := Get_Code_Values(HT);

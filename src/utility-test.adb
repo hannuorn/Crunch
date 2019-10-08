@@ -1,5 +1,6 @@
 pragma Assertion_Policy(Check);
 
+with Ada.Assertions;
 with Ada.Text_IO;       use Ada.Text_IO;
 
 
@@ -31,7 +32,7 @@ package body Utility.Test is
      (Condition         : in     Boolean) is
      
    begin
-      pragma Assert(Condition);
+      Ada.Assertions.Assert(Condition);
    end Assert;
    
      
@@ -43,8 +44,23 @@ package body Utility.Test is
       if Condition = FALSE then
          Print(Message);
       end if;
-      pragma Assert(Condition);
+      Ada.Assertions.Assert(Condition);
    end Assert;
+   
+                          
+   procedure Assert_Equals
+     (Actual            : in     Data_Type;
+      Expected          : in     Data_Type;
+      Message           : in     String) is
+      
+   begin
+      if not (Actual = Expected) then
+         Print(
+               Message & ", expected = " & Data_Type'Image(Expected) & 
+               ", actual = " & Data_Type'Image(Actual));
+      end if;
+      Ada.Assertions.Assert(Actual = Expected);
+   end Assert_Equals;
    
 
    procedure Begin_Test
