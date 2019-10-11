@@ -1,5 +1,14 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
 with Ada.Assertions;
-with Utility.Test; use Utility.Test;
+with Utility.Test;      use Utility.Test;
 
 
 package body Utility.Test.Discrete_Types is

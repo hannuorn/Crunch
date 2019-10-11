@@ -57,9 +57,9 @@ package body Deflate is
       Add(Output, BTYPE_Fixed_Huffman);
       while C_Input <= Input.Last loop
          Read_Byte(Input, C_Input, B);
-         Add(Output, Fixed_Huffman_Dictionary(Literal_Length_Symbol(B)));
+         Add(Output, Fixed_Huffman_Codewords(Literal_Length_Symbol(B)));
       end loop;
-      Add(Output, Fixed_Huffman_Dictionary(End_of_Block));
+      Add(Output, Fixed_Huffman_Codewords(End_of_Block));
    end Make_Single_Block_With_Fixed_Huffman;
    
    
@@ -83,7 +83,7 @@ package body Deflate is
       Header            : Dynamic_Bit_Array;
       BFINAL            : Bit;
       BTYPE             : BTYPE_Type;
-      S                 : Literal_Length_Symbol;
+      L                 : Literal_Length_Symbol;
       Found             : Boolean;
 
    begin
@@ -103,11 +103,11 @@ package body Deflate is
             null;
          end if;
          loop
-            Fixed_Huffman_Tree.Find(Stream, Counter, Found, S);
+            Fixed_Huffman_Code.Find(Stream, Counter, Found, L);
             if Found then
-               if S < 256 then
-                  Output.Add(To_Bits(Byte(S)));
-               elsif S = End_of_Block then
+               if L < 256 then
+                  Output.Add(To_Bits(Byte(L)));
+               elsif L = End_of_Block then
                   exit;
                else
                   -- length/distance not yet implemented

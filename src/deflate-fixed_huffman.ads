@@ -1,3 +1,23 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------
+--
+-- package Deflate.Fixed_Huffman
+-- 
+-- Purpose:
+--    Definitions of the fixed Huffman code. 
+--    Refer to RFC 1951, 3.2.5 and 3.2.6.
+--
+------------------------------------------------------------------------
+
 with Deflate.Huffman;
 
 
@@ -14,7 +34,7 @@ package Deflate.Fixed_Huffman is
    
    End_of_Block            : constant Literal_Length_Symbol := 256;
    
-   Length_Extra_Bits       : constant Bit_Lengths (257 .. 285):=
+   Length_Extra_Bits       : constant Huffman_Lengths (257 .. 285):=
      (257 .. 264  => 0,
       265 .. 268  => 1,
       269 .. 272  => 2,
@@ -23,7 +43,7 @@ package Deflate.Fixed_Huffman is
       281 .. 284  => 5,
       285         => 0);
       
-   First_Length            : constant Naturals (257 .. 285) := 
+   First_Length            : constant Huffman_Naturals (257 .. 285) := 
      (257 => 3,
       258 => 4,
       259 => 5,
@@ -54,7 +74,7 @@ package Deflate.Fixed_Huffman is
       284 => 227,
       285 => 258);
       
-   Distance_Extra_Bits     : constant Bit_Lengths (0 .. 29) :=
+   Distance_Extra_Bits     : constant Huffman_Lengths (0 .. 29) :=
      ( 0 .. 3  => 0,
        4 .. 5  => 1,
        6 .. 7  => 2,
@@ -70,7 +90,7 @@ package Deflate.Fixed_Huffman is
       26 .. 27 => 12,
       28 .. 29 => 13);
       
-   First_Distance          : constant Naturals (0 .. 29) :=
+   First_Distance          : constant Huffman_Naturals (0 .. 29) :=
      ( 0 => 1,
        1 => 2,
        2 => 3,
@@ -105,16 +125,16 @@ package Deflate.Fixed_Huffman is
        
    -- RFC 3.2.6
    
-   Fixed_Huffman_Bit_Lengths  : constant Bit_Lengths(Literal_Length_Alphabet) :=
+   Fixed_Huffman_Bit_Lengths  : constant Huffman_Lengths(Literal_Length_Alphabet) :=
      (  0 .. 143  => 8,
       144 .. 255  => 9,
       256 .. 279  => 7,
       280 .. 287  => 8);
       
-   Fixed_Huffman_Tree         : constant Huffman_Tree := 
+   Fixed_Huffman_Code         : constant Huffman_Code := 
                                     Build(Fixed_Huffman_Bit_Lengths);
    
-   Fixed_Huffman_Dictionary   : constant Dictionary := 
-                                    Get_Code_Values(Fixed_Huffman_Tree);
+   Fixed_Huffman_Codewords    : constant Huffman_Codewords := 
+                                    Get_Codewords(Fixed_Huffman_Code);
 
 end Deflate.Fixed_Huffman;

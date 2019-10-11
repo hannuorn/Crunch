@@ -85,6 +85,15 @@ package body Utility.Dynamic_Arrays is
    end Finalize;
 
 
+   function Empty_Dynamic_Array return Dynamic_Array is
+   
+      DA                : Dynamic_Array;
+      
+   begin
+      return DA;
+   end Empty_Dynamic_Array;
+
+
    ---------------------------------------------------------------------
    -- Enlarge
    --

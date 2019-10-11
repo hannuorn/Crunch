@@ -23,7 +23,6 @@ package body Utility.Binary_Search_Trees.Test is
    package RB_Trees is new Utility.Binary_Search_Trees.Red_Black_Trees;
    use RB_Trees;
    
-   
 
    procedure Verify_Counters
      (X                 : in     RB_Node_Access) is
@@ -75,8 +74,10 @@ package body Utility.Binary_Search_Trees.Test is
       
    begin
       if Node /= null then
+      
          -- Property 4. If a node is red, then both its children are black.
          -- Keep in mind that a null node is considered black.
+         
          if Node.Color = Red then
             Assert_Equals
                ((Node.Left  = null or else Node.Left.Color  = Black) and
@@ -88,10 +89,12 @@ package body Utility.Binary_Search_Trees.Test is
             B_Count := B_Count + 1;
          end if;
          if Node.Left = null and Node.Right = null then
+         
             -- Property 5. All paths contain the same number of black nodes.
             -- End of the branch has now been reached. Check the number of
             -- blacks along the branch, or initialize the Final_Black_Count
             -- if this was the first descendant reached.
+            
             if Final_Black_Count = 0 then
                Final_Black_Count := B_Count;
             else
@@ -112,7 +115,9 @@ package body Utility.Binary_Search_Trees.Test is
       
    begin
       if Root /= null then
+      
          -- Property 2. The root is black.
+         
          Assert_Equals(Root.Color = Black, TRUE, "Root is black");
          Verify_RB_Properties
            (Node => Root, Black_Count => 0, Final_Black_Count => FBC);

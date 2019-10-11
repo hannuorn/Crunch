@@ -13,9 +13,7 @@
 -- package Crunch_Main_Program
 -- 
 -- Implementation Notes:
---    This package implements the main program of Crunch,
---    including handling of command line parameters and 
---    input/output files.
+--    None.
 --
 ------------------------------------------------------------------------
 

@@ -12,8 +12,8 @@ Crunch follows the guidelines of *Ada Style Guide*.
 
 Huffman coding is implemented according to Deflate specification.
 A specific code can be represented as a list where a bit length is
-assigned to each symbol, see RFC 1951 3.2.2. Building an optimal code is
-implemented according to the "basic technique" described in Wikipedia.
+assigned to each symbol, see RFC 1951 3.2.2. Package-Merge algorithm
+is used to build a length-limited Huffman code (Sayood 2012).
 
 
 ## Red-Black Trees
@@ -48,3 +48,4 @@ of node counting.
 * [Wikipedia: Huffman coding](https://en.wikipedia.org/wiki/Huffman_coding)
 * [RFC 1951 DEFLATE Specification](https://tools.ietf.org/html/rfc1951)
 * Cormen, Thomas H., et al. (2009), Introduction to Algorithms, Third Edition. MIT Press.
+* Sayood, Khalid (2012), Introduction to data compression, Morgan Kaufmann, 4th ed.

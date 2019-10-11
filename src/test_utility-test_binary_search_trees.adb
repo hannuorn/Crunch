@@ -1,6 +1,15 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
 with Utility.Binary_Search_Trees;
-with Utility.Test; use Utility.Test;
-use Utility;
+with Utility.Test;            use Utility.Test;
+                              use Utility;
 
 
 package body Test_Utility.Test_Binary_Search_Trees is
@@ -18,6 +27,7 @@ package body Test_Utility.Test_Binary_Search_Trees is
    procedure Simple_Test is
    
       N                 : constant Natural := 1000;
+      
       T1                : Natural_Tree;
       T2                : Natural_Tree;
       OK                : Boolean;
@@ -56,9 +66,23 @@ package body Test_Utility.Test_Binary_Search_Trees is
       Assert(OK);
       Assert(X = 2);
       -- Jump to the end, so there should not be a next one
-      X := 1000;
+      X := N;
       T1.Find_Next(X, OK);
       Assert(not OK);
+
+      -- Try reverse enumeration with Find_Last and Find_Previous
+      -- First should be N
+      T1.Find_Last(X, OK);
+      Assert(OK, "Find_Last");
+      Assert(X = N, "Find_Last, X = N");
+      -- Previous should be N - 1
+      T1.Find_Previous(X, OK);
+      Assert(OK, "Find_Previous");
+      Assert(X = N - 1, "Find_Previous, X = N - 1");
+      -- Jump to the beginning, so there should not be a previous one
+      X := 1;
+      T1.Find_Previous(X, OK);
+      Assert(not OK, "Find_Previous, X = 1");
 
       -- Check first and last node
       Assert(T1.First = 1);

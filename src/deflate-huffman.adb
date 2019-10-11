@@ -18,8 +18,10 @@
 --
 -- References:
 --    * RFC 1951, 
---       DEFLATE Compressed Data Format Specification version 1.3
+--      DEFLATE Compressed Data Format Specification version 1.3
 --    * Wikipedia: Huffman coding
+--    * Sayood, Khalid (2012), Introduction to data compression,
+--      Morgan Kaufmann, 4th ed.
 --
 ------------------------------------------------------------------------
 
@@ -31,11 +33,11 @@ with Utility.Binary_Search_Trees;
 package body Deflate.Huffman is
 
    procedure Free is new Ada.Unchecked_Deallocation
-     (Huffman_Tree_Node, Huffman_Tree_Node_Access);
+        (Huffman_Tree_Node, Huffman_Tree_Node_Access);
      
 
    procedure Initialize
-     (Object            : in out Huffman_Tree) is
+     (Object            : in out Huffman_Code) is
      
    begin
       null;
@@ -59,10 +61,10 @@ package body Deflate.Huffman is
    
       
    procedure Adjust
-     (Object            : in out Huffman_Tree) is
+     (Object            : in out Huffman_Code) is
      
    begin
-      Adjust_Subtree(Object.Root);
+      Adjust_Subtree(Object.Tree);
    end Adjust;
    
    
@@ -79,19 +81,23 @@ package body Deflate.Huffman is
    
    
    procedure Finalize
-     (Object            : in out Huffman_Tree) is
+     (Object            : in out Huffman_Code) is
      
    begin
-      Free_Subtree(Object.Root);
+      Object.Has_Weights := FALSE;
+      Object.Weights := (others => 0);
+      Object.Lengths := (others => 0);
+      Object.Codewords := (others => Dynamic_Bit_Arrays.Empty_Dynamic_Array);
+      Free_Subtree(Object.Tree);
    end Finalize;
 
 
    function To_String
-     (Code              : in     Huffman_Code)
+     (Codeword          : in     Huffman_Codeword)
                           return String is
                           
-      S                 : String(1 .. Integer(Code.Length));
-      C                 : Bit_Array := Code.Get;
+      S                 : String(1 .. Integer(Codeword.Length));
+      C                 : Bit_Array := Codeword.Get;
       I                 : Natural;
       
    begin
@@ -108,46 +114,20 @@ package body Deflate.Huffman is
    
                           
    procedure Find
-     (HT                : in     Huffman_Tree;
-      Code              : in     Huffman_Code;
-      Found             : out    Boolean;
-      S                 : out    Symbol) is
-      
-      C                 : Bit_Array := Code.Get;
-      Node              : Huffman_Tree_Node_Access;
-      
-   begin
-      Found := FALSE;
-      S := Symbol'First;
-      Node := HT.Root;
-      for I in C'Range loop
-         exit when Node = null or else Node.Is_Leaf;
-         case C(I) is
-            when 0 => Node := Node.Edge_0;
-            when 1 => Node := Node.Edge_1;
-         end case;
-      end loop;
-      if Node /= null and then Node.Is_Leaf then
-         Found := TRUE;
-         S := Node.S;
-      end if;
-   end Find;
-
-
-   procedure Find
-     (Tree              : in     Huffman_Tree;
-      Stream            : in     Huffman_Code;
+     (Code              : in     Huffman_Code;
+      Stream            : in     Dynamic_Bit_Array;
       Counter           : in out Natural_64;
       Found             : out    Boolean;
-      S                 : out    Symbol) is
+      L                 : out    Letter) is
+      
       
       Node              : Huffman_Tree_Node_Access;
       I                 : Natural_64;
       
    begin
       Found := FALSE;
-      S := Symbol'First;
-      Node := Tree.Root;
+      L := Letter'First;
+      Node := Code.Tree;
       I := Counter;
       loop
          exit when Node = null or else Node.Is_Leaf;
@@ -159,22 +139,21 @@ package body Deflate.Huffman is
       end loop;
       if Node /= null and then Node.Is_Leaf then
          Found := TRUE;
-         S := Node.S;
+         L := Node.L;
          Counter := I;
       end if;
    end Find;
 
 
-   -- Trivial conversion from Natural to an array of bits.
-   function To_Huffman_Code
+   function To_Huffman_Codeword
      (N                 : in     Natural_64;
       Length            : in     Bit_Length)
-                          return Huffman_Code is
+                          return Huffman_Codeword is
 
       X                 : Natural_64;
       Bits              : Bit_Array(0 .. Natural_64(Limited_Bit_Length'Last));
       I                 : Bit_Length;
-      C                 : Huffman_Code;
+      C                 : Huffman_Codeword;
       B                 : Bit;
       
    begin
@@ -196,22 +175,21 @@ package body Deflate.Huffman is
          C.Add(Bits(Natural_64(I) - Natural_64(K)));
       end loop;
       return C;
-   end To_Huffman_Code;
+   end To_Huffman_Codeword;
    
    
    procedure Add_to_Tree
-     (Tree              : in out Huffman_Tree;
-      S                 : in     Symbol;
-      HC                : in     Huffman_Code) is
+     (Tree              : in out Huffman_Tree_Node_Access;
+      L                 : in     Letter;
+      Codeword          : in     Huffman_Codeword) is
       
-      C                 : Bit_Array := HC.Get;
+      C                 : Bit_Array := Codeword.Get;
       Node              : Huffman_Tree_Node_Access;
       
    begin
-      if HC.Length > 0 then
-         Node := Tree.Root;
+      if Codeword.Length > 0 then
+         Node := Tree;
          for B in C'Range loop
-            pragma Assert(not Node.Is_Leaf);
             if C(B) = 0 then
                if Node.Edge_0 = null then
                   Node.Edge_0 := new Huffman_Tree_Node;
@@ -226,45 +204,43 @@ package body Deflate.Huffman is
             Node.Is_Leaf := FALSE;
          end loop;
          Node.Is_Leaf := TRUE;
-         Node.S := S;
+         Node.L := L;
       end if;
    end Add_to_Tree;
    
    
-   procedure Build_Tree_From_Dictionary
-     (Tree              : out    Huffman_Tree;
-      D                 : in     Dictionary) is
+   procedure Build_Tree
+     (Tree              : in out Huffman_Tree_Node_Access;
+      Codewords         : in     Huffman_Codewords) is
       
    begin
-      Tree.Root := new Huffman_Tree_Node;
-      Tree.Root.Is_Leaf := FALSE;
-      for S in D'Range loop
-         Add_to_Tree(Tree, S, D(S));
+      Free_Subtree(Tree);
+      Tree := new Huffman_Tree_Node;
+      Tree.Is_Leaf := FALSE;
+      for L in Codewords'Range loop
+         Add_to_Tree(Tree, L, Codewords(L));
       end loop;
-      Tree.Has_Frequencies := FALSE;
-      Tree.Codes := D;
-   end Build_Tree_From_Dictionary;
+   end Build_Tree;
    
 
-------------------------------------------------------------------------
--- Build
---
--- Implementation Notes:
---    This procedure builds the Huffman tree using a sequence 
---    of bit lenghts as described in RFC 1951 3.2.2.
-------------------------------------------------------------------------
-
+   ---------------------------------------------------------------------
+   -- Build
+   --
+   -- Implementation Notes:
+   --    This procedure builds the Huffman tree using a sequence 
+   --    of bit lenghts as described in RFC 1951 3.2.2.
+   ---------------------------------------------------------------------
    procedure Build
-     (Tree              : out    Huffman_Tree;
-      Lengths           : in     Bit_Lengths) is
+     (Code              : out    Huffman_Code;
+      Lengths           : in     Huffman_Lengths) is
       
       type Bit_Length_Array is array (Limited_Bit_Length) of Natural_64;
       
       BL_Count          : Bit_Length_Array := (others => 0);
       Next_Code         : Bit_Length_Array := (others => 0);
-      Code              : Natural_64;
+      Number_Code       : Natural_64;
       Previous_Count    : Natural_64;
-      D                 : Dictionary;
+      Codewords         : Huffman_Codewords;
       Len               : Bit_Length;
       Max_Len           : Bit_Length := 0;
       
@@ -281,48 +257,70 @@ package body Deflate.Huffman is
       -- 2) Find the numerical value of the smallest code for each code length
       
       Previous_Count := 0;
-      Code := 0;
+      Number_Code := 0;
       for Bits in 1 .. Max_Len loop
-         Code := 2*(Code + Previous_Count);
-         Next_Code(Bits) := Code;
+         Number_Code := 2*(Number_Code + Previous_Count);
+
+         -- Debugging
+         -- Put_Line("BL" & Bit_Length'Image(Bits) & ", first code = " &
+               -- Natural_64'Image(Number_Code) & ", codes available " & 
+               -- Natural_64'Image(Natural_64(2**Natural(Bits)) - Number_Code) &
+               -- ", codes used = " & Natural_64'Image(BL_Count(Bits)));
+               
+         Next_Code(Bits) := Number_Code;
+         
+         if Next_Code(Bits) > 2**Natural(Bits) then
+            Put_Line("WARNING");
+            Put_Line("for BL" & Bit_Length'Image(Bits) & ", Next_Code = " &
+                  Natural_64'Image(Next_Code(Bits)) & " which is too long!");
+         end if;
          Previous_Count := BL_Count(Bits);
       end loop;
       
+      -- Debugging
+      -- Put_Line("Bit length : MAX number of codes");
+      -- for Bits in 1 .. Max_Len loop
+         -- Put_Line(Bit_Length'Image(Bits) & " :" & 
+               -- Natural_64'Image(Natural_64(2**Natural(Bits)) - Next_Code(Bits)));
+      -- end loop;
+      
       -- 3) Assign numerical values to all codes
-      for S in D'Range loop
-         Len := Lengths(S);
+      for L in Codewords'Range loop
+         Len := Lengths(L);
          if Len /= 0 then
-            D(S) := To_Huffman_Code(Next_Code(Len), Len);
+            Codewords(L) := To_Huffman_Codeword(Next_Code(Len), Len);
             Next_Code(Len) := Next_Code(Len) + 1;
          end if;
       end loop;
 
-      -- Convert the dictionary to a tree
-      Build_Tree_From_Dictionary(Tree, D);
+      Code.Has_Weights := FALSE;
+      Code.Lengths := Lengths;
+      Code.Codewords := Codewords;
+      Build_Tree(Code.Tree, Codewords);
    end Build;
 
 
    function Build
-     (Lengths           : in     Bit_Lengths)
-                          return Huffman_Tree is
+     (Lengths           : in     Huffman_Lengths)
+                          return Huffman_Code is
    
-      HT                : Huffman_Tree;
+      Code              : Huffman_Code;
       
    begin
-      Build(HT, Lengths);
-      return HT;
+      Build(Code, Lengths);
+      return Code;
    end Build;
 
 
    procedure Fill_in_Bit_Lengths
-     (Lengths           : in out Bit_Lengths;
+     (Lengths           : in out Huffman_Lengths;
       Depth             : in     Bit_Length;
       Node              : in     Huffman_Tree_Node_Access) is
       
    begin
       if Node /= null then
          if Node.Is_Leaf then
-            Lengths(Node.S) := Depth;
+            Lengths(Node.L) := Depth;
          else
             Fill_in_Bit_Lengths(Lengths, Depth + 1, Node.Edge_0);
             Fill_in_Bit_Lengths(Lengths, Depth + 1, Node.Edge_1);
@@ -331,110 +329,93 @@ package body Deflate.Huffman is
    end Fill_in_Bit_Lengths;
    
 
-   function Get_Bit_Lengths
-     (Tree              : in     Huffman_Tree)
-                          return Bit_Lengths is
+   function Calculate_Lengths
+     (Tree              : in     Huffman_Tree_Node_Access)
+                          return Huffman_Lengths is
 
-      BL                : Bit_Lengths(Symbol'Range) := (others => 0);
+      Lengths           : Huffman_Lengths(Letter);
       
    begin
-      Fill_in_Bit_Lengths(BL, 0, Tree.Root);
-      return BL;
-   end Get_Bit_Lengths;
+      Fill_in_Bit_Lengths(Lengths, 0, Tree);
+      return Lengths;
+   end Calculate_Lengths;
 
 
-   procedure Fill_in_Dictionary
-     (D                 : in out Dictionary;
-      Node              : in     Huffman_Tree_Node_Access;
-      Root_C            : in     Huffman_Code) is
-      
-      C0                : Huffman_Code;
-      C1                : Huffman_Code;
-      
-   begin
-      if Node /= null then
-         if Node.Is_Leaf then
-            D(Node.S) := Root_C;
-         else
-            C0 := Root_C;
-            C0.Add(0);
-            C1 := Root_C;
-            C1.Add(1);
-            Fill_in_Dictionary(D, Node.Edge_0, C0);
-            Fill_in_Dictionary(D, Node.Edge_1, C1);
-         end if;
-      end if;
-   end Fill_in_Dictionary;
-
-
-   function Get_Code_Values
-     (Tree              : in     Huffman_Tree)
-                          return Dictionary is
-      
-      C                 : Huffman_Code;
-      D                 : Dictionary;
-      
-   begin
-      return Tree.Codes;
-   end Get_Code_Values;
-
-
-   type Huffman_Build_Key is
-      record
-         Frequency      : Natural_64;
-         First_S        : Symbol;
-      end record;
-   
-   
-   function "<"
-     (Left, Right       : in     Huffman_Build_Key)
-                          return Boolean is
+   function Get_Lengths
+     (Code              : in     Huffman_Code)
+                          return Huffman_Lengths is
 
    begin
-      if Left.Frequency = Right.Frequency then
-         return Left.First_S < Right.First_S;
-      else
-         return Left.Frequency < Right.Frequency;
-      end if;
-   end "<";
-   
+      return Code.Lengths;
+   end Get_Lengths;
+
+
+   function Get_Codewords
+     (Code              : in     Huffman_Code)
+                          return Huffman_Codewords is
+      
+   begin
+      return Code.Codewords;
+   end Get_Codewords;
+
    
    ---------------------------------------------------------------------
    -- Build
    --
    -- Implementation Notes:
    --    This procedure builds an optimal Huffman code
-   --    given the frequency of each symbol.
+   --    given the weight of each letter.
    --
    --    Refer to Wikipedia: Huffman coding, chapter 'Basic technique'.
    ---------------------------------------------------------------------
-
    procedure Build
-     (Tree              : out    Huffman_Tree;
-      Frequencies       : in     Symbol_Frequencies) is
+     (Code              : out    Huffman_Code;
+      Weights           : in     Letter_Weights) is
 
+      -- Binary tree is used to maintain the sorted list
+      -- required in the algorithm.
+      
+      type Huffman_Build_Key is
+         record
+            Weight         : Natural_64;
+            First_L        : Letter;
+         end record;
+      
+      -- The list is sorted by weight.
+      function "<"
+        (Left, Right       : in     Huffman_Build_Key)
+                             return Boolean is
+
+      begin
+         if Left.Weight = Right.Weight then
+            return Left.First_L < Right.First_L;
+         else
+            return Left.Weight < Right.Weight;
+         end if;
+      end "<";
+      
       package Sorted_Lists is new Binary_Search_Trees
         (Huffman_Build_Key, Huffman_Tree_Node_Access, "<", "=");
       
-      HT                : Huffman_Tree;
       List              : Sorted_Lists.Binary_Search_Tree;
       Key_0             : Huffman_Build_Key;
       Key_1             : Huffman_Build_Key;
       Node_0            : Huffman_Tree_Node_Access;
       Node_1            : Huffman_Tree_Node_Access;
       N                 : Huffman_Tree_Node_Access;
+      Lengths           : Huffman_Lengths(Letter);
       
    begin
-      for S in Frequencies'Range loop
-         if Frequencies(S) > 0 then
+      for L in Weights'Range loop
+         if Weights(L) > 0 then
             N := new Huffman_Tree_Node;
             N.all :=
                  (Is_Leaf  => TRUE,
-                  S        => S,
+                  L        => L,
                   Edge_0   => null,
                   Edge_1   => null);
             List.Put
-                 (Key   => (Frequency => Frequencies(S), First_S => S),
+                 (Key   => (Weight => Weights(L), First_L => L),
                   Value => N);
          end if;
       end loop;
@@ -448,48 +429,48 @@ package body Deflate.Huffman is
          N := new Huffman_Tree_Node;
          N.all :=
               (Is_Leaf  => FALSE,
-               S        => Symbol'First,
+               L        => Letter'First,
                Edge_0   => Node_0,
                Edge_1   => Node_1);
          List.Put
-              (Key   => (Frequency => Key_0.Frequency + Key_1.Frequency,
-                         First_S => Key_0.First_S),
+              (Key   => (Weight  => Key_0.Weight + Key_1.Weight,
+                         First_L => Key_0.First_L),
                Value => N);
       end loop;
-      HT.Root := N;
-      -- HT is now a non-canonical Huffman code.
+      -- Code is now a non-canonical Huffman code.
       -- We use it only for bit lengths of the codes
       -- and build a canonical code from those lengths.
-      Tree.Build(Get_Bit_Lengths(HT));
-      Tree.Has_Frequencies := TRUE;
-      Tree.Frequencies := Frequencies;
+      Lengths := Calculate_Lengths(N);
+      Code.Build(Lengths);
+      Code.Has_Weights := TRUE;
+      Code.Weights := Weights;
    end Build;
 
 
    ---------------------------------------------------------------------
-   -- Build
+   -- Build_Length_Limited
    --
    -- Implementation Notes:
    --    This procedure builds a length-limited Huffman code
    --    using the package-merge algorithm. Refer to
    --    
-   --       Sayodd, Khalid (2012), Introduction to data compression,
+   --       Sayood, Khalid (2012), Introduction to data compression,
    --       Morgan Kaufmann, 4th ed.
    --
    --          3.2.3 Length-Limited Huffman Codes
    ---------------------------------------------------------------------
    procedure Build_Length_Limited
-     (Lengths           : out    Bit_Lengths;
+     (Code              : out    Huffman_Code;
       Length_Max        : in     Positive;
-      Frequencies       : in     Symbol_Frequencies) is
+      Weights           : in     Letter_Weights) is
       
       package Letter_Trees is new Utility.Binary_Search_Trees
-            (Symbol, Symbol, "<", "="); use Letter_Trees;
+            (Letter, Letter, "<", "="); use Letter_Trees;
       subtype Letter_Tree is Letter_Trees.Binary_Search_Tree;
       
       type Package_Merge_Item is
          record
-            Frequency         : Natural_64;
+            Weight            : Natural_64;
             Letters           : Letter_Tree;
          end record;
          
@@ -498,33 +479,44 @@ package body Deflate.Huffman is
                                 return Boolean is
 
       begin
-         if Left.Frequency = Right.Frequency then
+         if Left.Weight = Right.Weight then
             if Left.Letters.Size = Right.Letters.Size then
                return Left.Letters < Right.Letters;
             else
                return Left.Letters.Size < Right.Letters.Size;
             end if;
          else
-            return Left.Frequency < Right.Frequency;
+            return Left.Weight < Right.Weight;
          end if;
       end "<";
-      
+
+      function Letters_Equal
+        (Left, Right          : in     Package_Merge_Item)
+                                return Boolean is
+
+      begin
+         return Left.Letters = Right.Letters;
+      end Letters_Equal;
+
       package Package_Merge_Trees is new Utility.Binary_Search_Trees
-            (Package_Merge_Item, Natural, "<", "=");
+            (Package_Merge_Item, Natural, "<", Letters_Equal);
       subtype Package_Merge_Tree is Package_Merge_Trees.Binary_Search_Tree;
+      
+      
+      -- Print procedures for debugging purposes
       
       procedure Print
         (Item              : in     Package_Merge_Item) is
       
-         L                 : Symbol;
+         L                 : Letter;
          OK                : Boolean;
          
       begin
-         Put_Line("   Frequency =" & Natural_64'Image(Item.Frequency));
+         Put_Line("   Weight =" & Natural_64'Image(Item.Weight));
          Put("   Letters: ");
          Item.Letters.Find_First(L, OK);
          while OK loop
-            Put(Symbol'Image(L));
+            Put(Letter'Image(L));
             Item.Letters.Find_Next(L, OK);
             if OK then
                Put(",");
@@ -538,12 +530,15 @@ package body Deflate.Huffman is
         (PMT               : in     Package_Merge_Tree) is
 
          I                 : Package_Merge_Item;
+         N                 : Natural := 0;
          OK                : Boolean;
         
       begin
          Put_Line("Package-Merge items:");
          PMT.Find_First(I, OK);
          while OK loop
+            N := N + 1;
+            Put_Line("Item #" & Natural'Image(N));
             Print(I);
             PMT.Find_Next(I, OK);
          end loop;
@@ -555,48 +550,58 @@ package body Deflate.Huffman is
       PM_Merge             : Package_Merge_Tree;
       I1, I2               : Package_Merge_Item;
       OK, L_OK             : Boolean;
-      L                    : Symbol;
+      L                    : Letter;
       I                    : Natural_64;
       Packages             : Natural_64;
       Alphabet_Size        : Natural_64 := 0;
+      Lengths              : Huffman_Lengths(Letter);
 
    begin
       -- Initialize the list of letters.
-      for S in Frequencies'Range loop
-         if Frequencies(S) > 0 then
+      for S in Weights'Range loop
+         if Weights(S) > 0 then
             Alphabet_Size := Alphabet_Size + 1;
             declare
                Letters        : Letter_Tree;
             begin
                Letters.Put(S, S);
-               I1 := (Frequencies(S), Letters);
+               I1 := (Weights(S), Letters);
                PM_Letters.Put(I1, 0);
             end;
          end if;
       end loop;
+      
       PM_Merge := PM_Letters;
       for Iterations in 1 .. Length_Max - 1 loop
+      
+         -- Take items from merged list and group them two-by-two
          I1 := PM_Merge.First;
          I2 := PM_Merge.Next(I1);
-         -- take items from merged list and group them two-by-two
          PM_Package.Clear;
          Packages := PM_Merge.Size/2;
          for Package_Steps in 1 .. Packages loop
             declare
-               Letters        : Letter_Tree;
+               Letters           : Letter_Tree;
+               Sum_Weight        : Natural_64 := 0;
+               Add_OK            : Boolean;
             begin
                I1.Letters.Find_First(L, OK);
                while OK loop
                   Letters.Put(L, L);
+                  Sum_Weight := Sum_Weight + Weights(L);
                   I1.Letters.Find_Next(L, OK);
                end loop;
                I2.Letters.Find_First(L, OK);
                while OK loop
-                  Letters.Put(L, L);
+                  Letters.Add(L, L, Add_OK);
+                  if Add_OK then
+                     Sum_Weight := Sum_Weight + Weights(L);
+                  end if;
                   I2.Letters.Find_Next(L, OK);
                end loop;
+               
                PM_Package.Put(
-                    (Frequency => I1.Frequency + I2.Frequency,
+                    (Weight => Sum_Weight,
                      Letters => Letters), 0);
                if Package_Steps < Packages then
                   I1 := PM_Merge.Next(I2);
@@ -604,6 +609,7 @@ package body Deflate.Huffman is
                end if;
             end;
          end loop;
+         
          -- Merge the packages and original list of letters
          PM_Merge.Clear;
          PM_Package.Find_First(I1, OK);
@@ -617,50 +623,63 @@ package body Deflate.Huffman is
             PM_Letters.Find_Next(I1, OK);
          end loop;
       end loop;
+
+      -- Debugging
+      -- Put_Line("Symbols in use: " & Natural_64'Image(Alphabet_Size));
+      -- Put_Line("Using " & Natural_64'Image(2*Alphabet_Size - 2) & " PM items");
+      --
+      
       -- Count number of items containing each letter
-      Print(PM_Merge);
-      Put_Line("Symbols in use: " & Natural_64'Image(Alphabet_Size));
       I := 0;
       PM_Merge.Find_First(I1, OK);
-      while OK loop
-         exit when I = 2*Alphabet_Size - 2;
-         I := I + 1;
+      for I in 1 .. 2*Alphabet_Size - 2 loop
          I1.Letters.Find_First(L, L_OK);
          while L_OK loop
             Lengths(L) := Lengths(L) + 1;
-            if Lengths(L) > Bit_Length(Length_Max) then
-               Put_Line("Warning. Symbol " & Symbol'Image(L) & " now has " &
-                     "bit length of " & Bit_Length'Image(Lengths(L)));
-            end if;
             I1.Letters.Find_Next(L, L_OK);
          end loop;
          PM_Merge.Find_Next(I1, OK);
       end loop;
+      Build(Code, Lengths);
    end Build_Length_Limited;
 
 
    procedure Print
-     (Lengths           : in     Bit_Lengths) is
-     
+     (Lengths           : in     Huffman_Lengths) is
+
    begin
-      Put_Line("Symbol : code length");
+      Put_Line("Letter : code length");
       for I in Lengths'Range loop
          if Lengths(I) > 0 then
-            Put_Line(Symbol'Image(I) & " : " & Bit_Length'Image(Lengths(I)));
+            Put_Line(Letter'Image(I) & " : " & Bit_Length'Image(Lengths(I)));
          end if;
       end loop;
+      Put_Line("");
+   end Print;
+
+
+   procedure Print
+     (Codewords         : in     Huffman_Codewords) is
+
+   begin
+      Put_Line("");
+      Put_Line("Huffman_Codewords. Size is" & Integer'Image(Codewords'Length));
+      for L in Codewords'Range loop
+         Put_Line("      " & Letter'Image(L) & " = " & To_String(Codewords(L)));
+      end loop;
+      Put_Line("End of Huffman_Codewords.");
       Put_Line("");
    end Print;
    
 
    procedure Print
-     (Tree              : in     Huffman_Tree) is
+     (Code              : in     Huffman_Code) is
 
       type Symbol_Info is 
          record
-            S                 : Symbol;
-            Frequency         : Natural_64;
-            Code              : Huffman_Code;
+            L                 : Letter;
+            Weight            : Natural_64;
+            Code              : Huffman_Codeword;
          end record;
          
       function "<"
@@ -669,16 +688,16 @@ package body Deflate.Huffman is
                                 return Boolean is
 
       begin
-         if Left.S = Right.S then
+         if Left.L = Right.L then
             return FALSE;
-         elsif Left.Frequency = Right.Frequency then
+         elsif Left.Weight = Right.Weight then
             if Left.Code.Length = Right.Code.Length then
-               return Left.S < Right.S;
+               return Left.L < Right.L;
             else
                return Left.Code.Length > Right.Code.Length;
             end if;
          else
-            return Left.Frequency < Right.Frequency;
+            return Left.Weight < Right.Weight;
          end if;
       end "<";
       
@@ -687,7 +706,7 @@ package body Deflate.Huffman is
                                 return Boolean is
                                 
       begin
-         return Left.S = Right.S;
+         return Left.L = Right.L;
       end Symbol_Equals;
       
       
@@ -697,7 +716,7 @@ package body Deflate.Huffman is
       
       BL_Count          : Bit_Length_Array := (others => 0);
      
-      D                 : Dictionary;
+      CW                : Huffman_Codewords;
       SI                : Symbol_Info_Trees.Binary_Search_Tree;
       Freq              : Natural_64;
       Info              : Symbol_Info;
@@ -707,44 +726,44 @@ package body Deflate.Huffman is
       Put_Line("Huffman printout");
       Put_Line("");
       Put_Line("Alphabet size:" & Natural'Image(
-            Symbol'Pos(Symbol'Last) - Symbol'Pos(Symbol'First) + 1));
+            Letter'Pos(Letter'Last) - Letter'Pos(Letter'First) + 1));
             
-      if Tree.Has_Frequencies then
-         Put_Line("This tree was built from frequencies.");
+      if Code.Has_Weights then
+         Put_Line("This tree was built from Weights.");
       else
          Put_Line("This tree was built from code lengths.");
       end if;
       Put_Line("");
 
       -- Build sorted statistics
-      D := Tree.Get_Code_Values;
-      for I in D'Range loop
+      CW := Code.Get_Codewords;
+      for I in CW'Range loop
          Freq := 0;
-         if Tree.Has_Frequencies then
-            Freq := Tree.Frequencies(I);
+         if Code.Has_Weights then
+            Freq := Code.Weights(I);
          end if;
          Info := 
-              (S => I,
-               Frequency => Freq,
-               Code => D(I));
+              (L => I,
+               Weight => Freq,
+               Code => CW(I));
          if Info.Code.Length > 0 then
             SI.Put(Info, Info);
          end if;
       end loop;
       
-      -- 10 most/least common symbols, frequency, code length, code
+      -- 10 most/least common symbols, weight, code length, code
 
       Put_Line("10 most common symbols:");
       SI.Find_Last(Info, OK);
       for N in 1 .. 10 loop
          exit when not OK;
-         if Tree.Has_Frequencies then
-            Put_Line("Symbol " & Symbol'Image(Info.S) & 
-                  ": frequency" & Natural_64'Image(Info.Frequency) &
+         if Code.Has_Weights then
+            Put_Line("Letter " & Letter'Image(Info.L) & 
+                  ": Weight" & Natural_64'Image(Info.Weight) &
                   ", code length =" & Natural_64'Image(Info.Code.Length) & 
                   ", code = " & To_String(Info.Code));
          else
-            Put_Line("Symbol '" & Symbol'Image(Info.S) &
+            Put_Line("Letter '" & Letter'Image(Info.L) &
                   "', code length =" & Natural_64'Image(Info.Code.Length) &
                   ", code = " & To_String(Info.Code));
          end if;
@@ -756,13 +775,13 @@ package body Deflate.Huffman is
       SI.Find_First(Info, OK);
       for N in 1 .. 10 loop
          exit when not OK;
-         if Tree.Has_Frequencies then
-            Put_Line("Symbol " & Symbol'Image(Info.S) & 
-                  ": frequency" & Natural_64'Image(Info.Frequency) &
+         if Code.Has_Weights then
+            Put_Line("Letter " & Letter'Image(Info.L) & 
+                  ": Weight" & Natural_64'Image(Info.Weight) &
                   ", code length =" & Natural_64'Image(Info.Code.Length) & 
                   ", code = " & To_String(Info.Code));
          else
-            Put_Line("Symbol " & Symbol'Image(Info.S) &
+            Put_Line("Letter " & Letter'Image(Info.L) &
                   ", code length =" & Natural_64'Image(Info.Code.Length) &
                   ", code = " & To_String(Info.Code));
          end if;
@@ -771,9 +790,9 @@ package body Deflate.Huffman is
       Put_Line("");
       
       -- summary by code length, how many codes for each length
-      for I in D'Range loop
-         BL_Count(Bit_Length(D(I).Length)) := 
-               BL_Count(Bit_Length(D(I).Length)) + 1;
+      for I in CW'Range loop
+         BL_Count(Bit_Length(CW(I).Length)) := 
+               BL_Count(Bit_Length(CW(I).Length)) + 1;
       end loop;
       Put_Line("Bit length : Number of codes");
       for I in 1 .. Max_Bit_Length loop

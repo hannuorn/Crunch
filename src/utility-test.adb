@@ -1,3 +1,12 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
 pragma Assertion_Policy(Check);
 
 with Ada.Assertions;
@@ -43,7 +52,7 @@ package body Utility.Test is
       
    begin
       if Condition = FALSE then
-         Print(Message);
+         Print("ASSERT FAILURE: " & Message);
       end if;
       Ada.Assertions.Assert(Condition);
    end Assert;

@@ -1,6 +1,15 @@
-with Utility.Test;         use Utility.Test;
-                           use Utility;
-with Utility.Bit_Arrays;   use Utility.Bit_Arrays;
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
+with Utility.Test;            use Utility.Test;
+                              use Utility;
+with Utility.Bit_Arrays;      use Utility.Bit_Arrays;
 with Deflate.Huffman;
 
 
@@ -10,56 +19,78 @@ package body Test_Deflate.Test_Huffman is
          new Deflate.Huffman(Byte); use Byte_Huffman;
    package Character_Huffman is
          new Deflate.Huffman(Character); use Character_Huffman;
-   
-   
-   procedure Test_Build_from_Frequencies is
-   
-      HT                : Byte_Huffman.Huffman_Tree;
-      Freq              : Byte_Huffman.Symbol_Frequencies;
-      Char_Freq         : Character_Huffman.Symbol_Frequencies;
-      Char_Lengths      : Character_Huffman.Bit_Lengths(Character);
-      Char_HT           : Character_Huffman.Huffman_Tree;
-      Lengths           : Byte_Huffman.Bit_Lengths(Byte);
-   
+
+
+   procedure Basic_Test is
+
+      Weights           : Byte_Huffman.Letter_Weights;
+      Lengths           : Byte_Huffman.Huffman_Lengths(Byte);
+      Codewords         : Byte_Huffman.Huffman_Codewords;
+      HC                : Byte_Huffman.Huffman_Code;
+      
    begin
-      Begin_Test("Build (from frequencies)");
+      Begin_Test("Basic_Test");
       
-      Char_Freq('A') := 5;
-      Char_Freq('B') := 10;
-      Char_Freq('C') := 15;
-      Char_Freq('D') := 20;
-      Char_Freq('E') := 20;
-      Char_Freq('F') := 30;
-      Build_Length_Limited(Char_Lengths, 3, Char_Freq);
-      Print(Char_Lengths);
-      Char_HT.Build(Char_Lengths);
-      Print("3-BIT LIMITED CHARACTER CODE");
-      Char_HT.Print;
-      
-      -- Extreme frequencies and differences between low and high frequencies.
-      -- The highest frequency is (2**8 - 1)**6, approx. 2**48
-      for I in Freq'Range loop
-         Freq(I) := Natural_64(I)**6;
+      -- Even distribution should make every codeword 8 bits long.
+      Weights := (others => 1);
+      HC.Build(Weights);
+      Lengths := HC.Get_Lengths;
+      Codewords := HC.Get_Codewords;
+      for L in Lengths'Range loop
+         Assert_Equals(Natural(Lengths(L)), 8, "Lengths(L), L = " & Byte'Image(L));
+         Assert_Equals(Codewords(L).Length, 8, "Codewords(L).Length, " &
+                         "Codeword = """ & Byte_Huffman.To_String(Codewords(L)) &
+                       """");
+         declare
+            S        : String := Byte_Huffman.To_String(Codewords(L));
+         begin
+            Assert(S'Length = 8, "To_String'Length = 8, S = """ & S & """");
+         end;
       end loop;
-      HT.Build(Freq);
-      Print("UNLIMITED-LENGTH CODE");
-      HT.Print;
-      Print("");
-      Build_Length_Limited(Lengths, 15, Freq);
-      Print(Lengths);
-      Build(HT, Lengths);
-      Print("LIMITED-LENGTH CODE");
-      HT.Print;
+
+      -- Same thing with a limited length 8 code.
+      HC.Build_Length_Limited(Length_Max => 8, Weights => Weights);
+      Lengths := HC.Get_Lengths;
+      Codewords := HC.Get_Codewords;
+      for L in Lengths'Range loop
+         Assert_Equals(Natural(Lengths(L)), 8, "Lengths(L), L = " & Byte'Image(L));
+         Assert_Equals(Codewords(L).Length, 8, "Codewords(L).Length, " &
+                         "Codeword = """ & Byte_Huffman.To_String(Codewords(L)) &
+                       """");
+         declare
+            S        : String := Byte_Huffman.To_String(Codewords(L));
+         begin
+            Assert(S'Length = 8, "To_String'Length = 8, S = """ & S & """");
+         end;
+      end loop;
       
+      -- Same thing with a code built using codeword lengths.
+      HC := Build(Lengths);
+      Lengths := HC.Get_Lengths;
+      Codewords := HC.Get_Codewords;
+      for L in Lengths'Range loop
+         Assert_Equals(Natural(Lengths(L)), 8, "Lengths(L), L = " & Byte'Image(L));
+         Assert_Equals(Codewords(L).Length, 8, "Codewords(L).Length, " &
+                         "Codeword = """ & Byte_Huffman.To_String(Codewords(L)) &
+                       """");
+         declare
+            S        : String := Byte_Huffman.To_String(Codewords(L));
+         begin
+            Assert(S'Length = 8, "To_String'Length = 8, S = """ & S & """");
+         end;
+      end loop;
+
       End_Test;
-   end Test_Build_from_Frequencies;
+   end Basic_Test;
    
    
    procedure Test is
    
    begin
       Begin_Test("Huffman");
-      Test_Build_from_Frequencies;
+      
+      Basic_Test;
+      
       End_Test;
    end Test;
 

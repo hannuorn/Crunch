@@ -109,6 +109,7 @@ package Utility.Dynamic_Arrays is
       with
          Post => Is_Empty'Result = (This.Length = 0);
 
+   function Empty_Dynamic_Array return Dynamic_Array;
  
    ---------------------------------------------------------------------
    -- First
