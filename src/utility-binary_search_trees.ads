@@ -55,7 +55,14 @@ package Utility.Binary_Search_Trees is
    
    Binary_Search_Tree_Key_Not_Found : exception;
    
+   function "="
+     (Left, Right       : in     Binary_Search_Tree)
+                          return Boolean;
 
+   function "<"
+     (Left, Right       : in     Binary_Search_Tree)
+                          return Boolean;
+                          
    ---------------------------------------------------------------------
    -- Size
    --
@@ -74,7 +81,12 @@ package Utility.Binary_Search_Trees is
       with
          Post => Is_Empty'Result = (This.Size = 0);
    
-   
+   procedure Clear
+     (This              : in out Binary_Search_Tree)
+     
+      with
+         Post => This.Is_Empty;
+
    ---------------------------------------------------------------------
    -- Contains
    --
@@ -214,7 +226,9 @@ package Utility.Binary_Search_Trees is
    
    ---------------------------------------------------------------------
    -- Find_First
+   -- Find_Last
    -- Find_Next
+   -- Find_Previous
    --
    -- Purpose:
    --    These procedures allow easy enumeration of the tree.
@@ -224,10 +238,20 @@ package Utility.Binary_Search_Trees is
    ---------------------------------------------------------------------
    procedure Find_First
      (This              : in     Binary_Search_Tree;
-      First             : out    Key_Type;
+      Key               : out    Key_Type;
+      Found             : out    Boolean);
+   
+   procedure Find_Last
+     (This              : in     Binary_Search_Tree;
+      Key               : out    Key_Type;
       Found             : out    Boolean);
    
    procedure Find_Next
+     (This              : in     Binary_Search_Tree;
+      Key               : in out Key_Type;
+      Found             : out    Boolean);  
+   
+   procedure Find_Previous
      (This              : in     Binary_Search_Tree;
       Key               : in out Key_Type;
       Found             : out    Boolean);  

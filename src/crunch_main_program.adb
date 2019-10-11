@@ -41,7 +41,6 @@ package body Crunch_Main_Program is
 
    procedure Crunch_Test is
    
-   
    begin
       Put_Line("Crunch - test mode");
       Put_Line("Running unit tests...");
@@ -49,6 +48,15 @@ package body Crunch_Main_Program is
       Test_Utility.Test;
       Test_Deflate.Test;
    end Crunch_Test;
+
+
+   procedure Crunch_Demo is
+   
+   begin
+      Put_Line("Crunch - demo mode");
+      Put_Line("");
+      Run_Demo;
+   end Crunch_Demo;
    
    
    procedure Read_File
@@ -138,6 +146,8 @@ package body Crunch_Main_Program is
    begin
       if Argument_Count = 1 and then Argument(1) = "-test" then
          Crunch_Test;
+      elsif Argument_Count = 1 and then Argument(1) = "-demo" then
+         Crunch_Demo;
       else
          Crunch_Run;
       end if;

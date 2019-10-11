@@ -23,6 +23,7 @@ package body Utility.Binary_Search_Trees.Test is
    package RB_Trees is new Utility.Binary_Search_Trees.Red_Black_Trees;
    use RB_Trees;
    
+   
 
    procedure Verify_Counters
      (X                 : in     RB_Node_Access) is
@@ -38,7 +39,7 @@ package body Utility.Binary_Search_Trees.Test is
          if X.Right /= null then
             Right_Count := X.Right.Count;
          end if;
-         Assert(X.Count = 1 + Left_Count + Right_Count);
+         Assert_Equals(X.Count, 1 + Left_Count + Right_Count, "X.Count");
          Verify_Counters(X.Left);
          Verify_Counters(X.Right);
       end if;
@@ -77,8 +78,10 @@ package body Utility.Binary_Search_Trees.Test is
          -- Property 4. If a node is red, then both its children are black.
          -- Keep in mind that a null node is considered black.
          if Node.Color = Red then
-            Assert((Node.Left  = null or else Node.Left.Color  = Black) and
-                   (Node.Right = null or else Node.Right.Color = Black));
+            Assert_Equals
+               ((Node.Left  = null or else Node.Left.Color  = Black) and
+                (Node.Right = null or else Node.Right.Color = Black),
+                TRUE, "Children of a red node are both black");
          end if;
          B_Count := Black_Count;
          if Node.Color = Black then
@@ -92,7 +95,7 @@ package body Utility.Binary_Search_Trees.Test is
             if Final_Black_Count = 0 then
                Final_Black_Count := B_Count;
             else
-               Assert(B_Count = Final_Black_Count);
+               Assert_Equals(B_Count, Final_Black_Count, "Black node count");
             end if;
          else
             Verify_RB_Properties(Node.Left,  B_Count, Final_Black_Count);
@@ -110,7 +113,7 @@ package body Utility.Binary_Search_Trees.Test is
    begin
       if Root /= null then
          -- Property 2. The root is black.
-         Assert(Root.Color = Black);
+         Assert_Equals(Root.Color = Black, TRUE, "Root is black");
          Verify_RB_Properties
            (Node => Root, Black_Count => 0, Final_Black_Count => FBC);
       end if;

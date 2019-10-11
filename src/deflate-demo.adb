@@ -6,6 +6,7 @@ with Deflate.Huffman;
 
 package body Deflate.Demo is
 
+   
    procedure Demo_Huffman_Tree_Building is
    
       package Character_Huffman is new Deflate.Huffman(Character);
@@ -14,8 +15,10 @@ package body Deflate.Demo is
       Message        : constant String :=
             "A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED";
       D              : Dictionary;
-      Freq           : Symbol_Frequencies(Character);
+      Freq           : Symbol_Frequencies;
       HT             : Huffman_Tree;
+      HT2            : Huffman_Tree;
+      Lens           : Bit_Lengths(Character'Range);
       
    begin
       Put_Line("Message = """ & Message & """");
@@ -24,6 +27,7 @@ package body Deflate.Demo is
          Freq(Message(I)) := Freq(Message(I)) + 1;
       end loop;
       Build(HT, Freq);
+      
       D := Get_Code_Values(HT);
       Put_Line("Huffman codes:");
       for S in D'Range loop
@@ -32,7 +36,26 @@ package body Deflate.Demo is
             Put_Line(" = " & To_String(D(S)));
          end if;
       end loop;
+      
       Put_Line("");
+      
+      Lens := HT.Get_Bit_Lengths;
+      Put_Line("Lengths:");
+      for S in Lens'Range loop
+         if Lens(S) > 0 then
+            Put_Line(S & " has length " & Bit_Length'Image(Lens(S)));
+         end if;
+      end loop;
+      HT2.Build(Lens);
+      
+      D := Get_Code_Values(HT2);
+      Put_Line("Huffman codes:");
+      for S in D'Range loop
+         if Freq(S) > 0 then
+            Put(Character(S));
+            Put_Line(" = " & To_String(D(S)));
+         end if;
+      end loop;
    end Demo_Huffman_Tree_Building;
    
    
@@ -88,6 +111,7 @@ package body Deflate.Demo is
          end;
       end loop;
       Put_Line("");
+      HT.Print;
    end Demo_Bit_Lengths_to_Huffman_Tree;
 
 
@@ -101,7 +125,7 @@ package body Deflate.Demo is
       
       C                 : Natural_64 := Input.First;
       B                 : Byte;
-      Freq              : Byte_Huffman.Symbol_Frequencies(Byte);
+      Freq              : Byte_Huffman.Symbol_Frequencies;
       HT                : Byte_Huffman.Huffman_Tree;
       D                 : Byte_Huffman.Dictionary;
       

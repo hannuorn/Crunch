@@ -2,6 +2,7 @@ pragma Assertion_Policy(Check);
 
 with Ada.Assertions;
 with Ada.Text_IO;       use Ada.Text_IO;
+with Utility.Test.Discrete_Types;
 
 
 package body Utility.Test is
@@ -47,25 +48,33 @@ package body Utility.Test is
       Ada.Assertions.Assert(Condition);
    end Assert;
    
-                          
-   procedure Assert_Equals
-     (Actual            : in     Data_Type;
-      Expected          : in     Data_Type;
-      Message           : in     String) is
-      
-   begin
-      if not (Actual = Expected) then
-         Print(
-               Message & ", expected = " & Data_Type'Image(Expected) & 
-               ", actual = " & Data_Type'Image(Actual));
-      end if;
-      Ada.Assertions.Assert(Actual = Expected);
-   end Assert_Equals;
    
+   package Natural_Testing    is new Utility.Test.Discrete_Types(Natural);
+   package Natural_64_Testing is new Utility.Test.Discrete_Types(Natural_64);
+   package Boolean_Testing    is new Utility.Test.Discrete_Types(Boolean);
+   
+   procedure Assert_Equals
+     (Actual            : in     Natural;
+      Expected          : in     Natural;
+      Message           : in     String) 
+      renames Natural_Testing.Assert_Equals;
+
+   procedure Assert_Equals
+     (Actual            : in     Natural_64;
+      Expected          : in     Natural_64;
+      Message           : in     String) 
+      renames Natural_64_Testing.Assert_Equals;
+
+   procedure Assert_Equals
+     (Actual            : in     Boolean;
+      Expected          : in     Boolean;
+      Message           : in     String)
+      renames Boolean_Testing.Assert_Equals;
+
 
    procedure Begin_Test
      (Title             : in     String) is
-     
+
    begin
       Print(Title);
       Indent_Count := Indent_Count + 1;

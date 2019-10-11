@@ -10,7 +10,7 @@ package body Test_Utility is
    begin
       Begin_Test("Utility");
       Test_Utility.Test_Dynamic_Arrays.Test;
-      Test_Utility.Test_Binary_Search_Trees.Test;
+      --Test_Utility.Test_Binary_Search_Trees.Test;
       End_Test;
    end Test;
 

@@ -31,7 +31,8 @@ package Deflate is
    BTYPE_Fixed_Huffman     : constant BTYPE_Type := (0, 1);
    BTYPE_Dynamic_Huffman   : constant BTYPE_Type := (1, 0);
 
-
+   procedure Run_Demo;
+   
    procedure Compress
      (Input             : in     Dynamic_Bit_Array;
       Output            : out    Dynamic_Bit_Array);

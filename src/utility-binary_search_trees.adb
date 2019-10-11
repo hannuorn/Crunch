@@ -94,6 +94,69 @@ package body Utility.Binary_Search_Trees is
    end Finalize;
 
 
+   function "="
+     (Left, Right       : in     Binary_Search_Tree)
+                          return Boolean is
+
+      L, R              : Key_Type;
+      L_OK, R_OK        : Boolean;
+
+   begin
+      if Left.Size /= Right.Size then
+         return FALSE;
+      elsif Left.Size = 0 then
+         return TRUE;
+      else
+         Left.Find_First(L, L_OK);
+         Right.Find_First(R, R_OK);
+         loop
+            if L /= R then
+               return FALSE;
+            elsif Left.Get(L) /= Right.Get(R) then
+               return FALSE;
+            else
+               Left.Find_Next(L, L_OK);
+               Right.Find_Next(R, R_OK);
+            end if;
+            exit when not L_OK;
+         end loop;
+      end if;
+      return TRUE;
+   end "=";
+
+
+   function "<"
+     (Left, Right       : in     Binary_Search_Tree)
+                          return Boolean is
+
+      L, R              : Key_Type;
+      L_OK, R_OK        : Boolean;
+      
+   begin
+      Left.Find_First(L, L_OK);
+      Right.Find_First(R, R_OK);
+      if not L_OK and not L_OK then
+         return FALSE;
+      elsif L_OK /= R_OK then
+         return Left.Size < Right.Size;
+      else
+         loop
+            if L /= R then
+               return L < R;
+            else
+               Left.Find_Next(L, L_OK);
+               Right.Find_Next(R, R_OK);
+               if not L_OK and not R_OK then
+                  return FALSE;
+               elsif L_OK /= R_OK then
+                  return Left.Size < Right.Size;
+               end if;
+            end if;
+         end loop;
+      end if;
+   end "<";
+
+
    function Size
      (This              : in     Binary_Search_Tree)
                           return Natural_64 is
@@ -115,7 +178,16 @@ package body Utility.Binary_Search_Trees is
       return This.Size = 0;
    end Is_Empty;
 
-                        
+
+   procedure Clear
+     (This              : in out Binary_Search_Tree) is
+     
+   begin
+      Finalize(This);
+      Initialize(This);
+   end Clear;
+
+
    function Contains
      (This              : in     Binary_Search_Tree;
       Key               : in     Key_Type)
@@ -284,7 +356,7 @@ package body Utility.Binary_Search_Trees is
    
    procedure Find_First
      (This              : in     Binary_Search_Tree;
-      First             : out    Key_Type;
+      Key               : out    Key_Type;
       Found             : out    Boolean) is
       
       X                 : RB_Node_Access;
@@ -294,10 +366,28 @@ package body Utility.Binary_Search_Trees is
       if X = null then
          Found := FALSE;
       else
-         First := X.Key;
+         Key := X.Key;
          Found := TRUE;
       end if;
    end Find_First;
+
+   
+   procedure Find_Last
+     (This              : in     Binary_Search_Tree;
+      Key               : out    Key_Type;
+      Found             : out    Boolean) is
+      
+      X                 : RB_Node_Access;
+      
+   begin
+      X := RB_Last(This.Root);
+      if X = null then
+         Found := FALSE;
+      else
+         Key := X.Key;
+         Found := TRUE;
+      end if;
+   end Find_Last;
 
    
    procedure Find_Next
@@ -316,6 +406,24 @@ package body Utility.Binary_Search_Trees is
          Found := TRUE;
       end if;
    end Find_Next;
+
+
+   procedure Find_Previous
+     (This              : in     Binary_Search_Tree;
+      Key               : in out Key_Type;
+      Found             : out    Boolean) is
+      
+      X                 : RB_Node_Access;
+      
+   begin
+      X := RB_Previous(This.Root, Key);
+      if X = null then
+         Found := FALSE;
+      else
+         Key := X.Key;
+         Found := TRUE;
+      end if;
+   end Find_Previous;
 
 
    procedure Verify

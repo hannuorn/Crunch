@@ -26,7 +26,14 @@ with Deflate.Fixed_Huffman;      use Deflate.Fixed_Huffman;
 
 package body Deflate is
 
-
+   procedure Run_Demo is
+   
+   begin
+      Demo_Huffman_Tree_Building;
+      Demo_Bit_Lengths_to_Huffman_Tree;
+   end Run_Demo;
+   
+   
    procedure Make_Single_Block_With_Fixed_Huffman
      (Input             : in     Dynamic_Bit_Array;
       Output            : out    Dynamic_Bit_Array) is

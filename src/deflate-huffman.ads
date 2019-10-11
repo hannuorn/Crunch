@@ -25,17 +25,19 @@ with Utility.Bit_Arrays;         use Utility.Bit_Arrays;
 generic
 
    type Symbol is (<>);
-   Max_Bit_Length       : Natural := 16;
+   Max_Bit_Length       : Natural := 60;
    
    
 package Deflate.Huffman is
 
    subtype Huffman_Code is Dynamic_Bit_Array;
    type Dictionary is array (Symbol) of Huffman_Code;
-   type Bit_Length is new Natural range 0 .. Max_Bit_Length;
-   type Bit_Lengths is array (Symbol range <>) of Bit_Length;
+   type Bit_Length is new Natural;-- range 0 .. Max_Bit_Length;
+   subtype Limited_Bit_Length is Bit_Length range 0 .. Bit_Length(Max_Bit_Length);
+   type Bit_Lengths is array (Symbol range <>) of Bit_Length
+      with Default_Component_Value => 0;
    type Naturals is array (Symbol range <>) of Natural;
-   type Symbol_Frequencies is array (Symbol range <>) of Natural_64
+   type Symbol_Frequencies is array (Symbol) of Natural_64
       with Default_Component_Value => 0;
 
    type Huffman_Tree is tagged private;
@@ -86,6 +88,10 @@ package Deflate.Huffman is
    procedure Build
      (Tree              : out    Huffman_Tree;
       Lengths           : in     Bit_Lengths);
+      
+   function Build
+     (Lengths           : in     Bit_Lengths)
+                          return Huffman_Tree;
 
    ------------------------------------------------------------------------
    -- Get_Bit_Lengths
@@ -97,10 +103,6 @@ package Deflate.Huffman is
    function Get_Bit_Lengths
      (Tree              : in     Huffman_Tree)
                           return Bit_Lengths;
-
-   function Build
-     (Lengths           : in     Bit_Lengths)
-                          return Huffman_Tree;
 
    ------------------------------------------------------------------------
    -- Get_Code_Values
@@ -124,6 +126,17 @@ package Deflate.Huffman is
      (Tree              : out    Huffman_Tree;
       Frequencies       : in     Symbol_Frequencies);
    
+   procedure Build_Length_Limited
+     (Lengths           : out    Bit_Lengths;
+      Length_Max        : in     Positive;
+      Frequencies       : in     Symbol_Frequencies);
+      
+   procedure Print
+     (Lengths           : in     Bit_Lengths);
+     
+   procedure Print
+     (Tree              : in     Huffman_Tree);
+   
    
 private
 
@@ -140,6 +153,9 @@ private
    type Huffman_Tree is new Ada.Finalization.Controlled with
       record
          Root              : Huffman_Tree_Node_Access;
+         Has_Frequencies   : Boolean := FALSE;
+         Frequencies       : Symbol_Frequencies;
+         Codes             : Dictionary;
       end record;
       
    procedure Initialize
@@ -147,10 +163,8 @@ private
       
    procedure Adjust
      (Object            : in out Huffman_Tree);
-      
-
+     
    procedure Finalize
      (Object            : in out Huffman_Tree);
       
-
 end Deflate.Huffman;
