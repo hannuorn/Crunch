@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 --
---       Copyright (c) 2019, Hannu Ã–rn
+--       Copyright (c) 2019, Hannu Örn
 --       All rights reserved.
 --
--- Author: Hannu Ã–rn
+-- Author: Hannu Örn
 --
 ------------------------------------------------------------------------
 
@@ -30,8 +30,9 @@ with Utility.Bit_Arrays;      use Utility.Bit_Arrays;
 with Test_Utility;
 with Test_Deflate;
 with Deflate;                 use Deflate;
-with Deflate.Huffman;
-with Deflate.Fixed_Huffman;
+with Deflate.Compression;     use Deflate.Compression;
+--with Deflate.Huffman;
+--with Deflate.Fixed_Huffman;
 
 
 package body Crunch_Main_Program is

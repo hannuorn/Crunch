@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 --
---       Copyright (c) 2019, Hannu Ã–rn
+--       Copyright (c) 2019, Hannu Örn
 --       All rights reserved.
 --
--- Author: Hannu Ã–rn
+-- Author: Hannu Örn
 --
 ------------------------------------------------------------------------
 
@@ -15,16 +15,10 @@ with Deflate.Huffman;
 
 package body Deflate.Demo is
 
-   package Byte_Huffman is
-         new Deflate.Huffman(Byte);
-
-   package Character_Huffman is
-         new Deflate.Huffman(Character);
-
-   
    -- This example is from Wikipedia, Huffman coding, Basic technique.
    procedure Demo_Huffman_Tree_Building is
    
+      package Character_Huffman is new Deflate.Huffman(Character);
       use Character_Huffman;
    
       Message           : constant String :=
@@ -165,6 +159,9 @@ package body Deflate.Demo is
 
 
    procedure Demo_Build_from_Frequencies is
+   
+      package Byte_Huffman is new Deflate.Huffman(Byte);
+      package Character_Huffman is new Deflate.Huffman(Character);
    
       use Byte_Huffman;
       use Character_Huffman;

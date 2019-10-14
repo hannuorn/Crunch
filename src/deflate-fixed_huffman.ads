@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 --
---       Copyright (c) 2019, Hannu Ã–rn
+--       Copyright (c) 2019, Hannu Örn
 --       All rights reserved.
 --
--- Author: Hannu Ã–rn
+-- Author: Hannu Örn
 --
 ------------------------------------------------------------------------
 
@@ -131,10 +131,10 @@ package Deflate.Fixed_Huffman is
       256 .. 279  => 7,
       280 .. 287  => 8);
       
-   Fixed_Huffman_Code         : constant Huffman_Code := 
-                                    Build(Fixed_Huffman_Bit_Lengths);
+--   Fixed_Huffman_Code         : constant Huffman_Code := 
+--                                    Build(Fixed_Huffman_Bit_Lengths);
    
-   Fixed_Huffman_Codewords    : constant Huffman_Codewords := 
-                                    Get_Codewords(Fixed_Huffman_Code);
+--   Fixed_Huffman_Codewords    : constant Huffman_Codewords := 
+--                                    Get_Codewords(Fixed_Huffman_Code);
 
 end Deflate.Fixed_Huffman;

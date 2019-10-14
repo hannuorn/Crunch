@@ -7,9 +7,10 @@
 --
 ------------------------------------------------------------------------
 
-package Utility is
+package Deflate.Compression is
 
-   type Natural_64 is range 0 .. 2**63 - 1;
-   subtype Positive_64 is Natural_64 range 1 .. Natural_64'Last;
+   procedure Compress
+     (Input             : in     Dynamic_Bit_Array;
+      Output            : out    Dynamic_Bit_Array);
 
-end Utility;
+end Deflate.Compression;

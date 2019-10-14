@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 --
---       Copyright (c) 2019, Hannu Ã–rn
+--       Copyright (c) 2019, Hannu Örn
 --       All rights reserved.
 --
--- Author: Hannu Ã–rn
+-- Author: Hannu Örn
 --
 ------------------------------------------------------------------------
 
@@ -58,28 +58,41 @@ package body Utility.Test is
    end Assert;
    
    
-   package Natural_Testing    is new Utility.Test.Discrete_Types(Natural);
-   package Natural_64_Testing is new Utility.Test.Discrete_Types(Natural_64);
-   package Boolean_Testing    is new Utility.Test.Discrete_Types(Boolean);
-   
    procedure Assert_Equals
      (Actual            : in     Natural;
       Expected          : in     Natural;
-      Message           : in     String) 
-      renames Natural_Testing.Assert_Equals;
+      Message           : in     String) is
+      
+      package Natural_Testing is new Utility.Test.Discrete_Types(Natural);
+      
+   begin
+      Natural_Testing.Assert_Equals(Actual, Expected, Message);
+   end Assert_Equals;
+   
 
    procedure Assert_Equals
      (Actual            : in     Natural_64;
       Expected          : in     Natural_64;
-      Message           : in     String) 
-      renames Natural_64_Testing.Assert_Equals;
-
+      Message           : in     String) is
+      
+      package Natural_64_Testing is new Utility.Test.Discrete_Types(Natural_64);
+      
+   begin
+      Natural_64_Testing.Assert_Equals(Actual, Expected, Message);
+   end Assert_Equals;
+   
+   
    procedure Assert_Equals
      (Actual            : in     Boolean;
       Expected          : in     Boolean;
-      Message           : in     String)
-      renames Boolean_Testing.Assert_Equals;
-
+      Message           : in     String) is
+      
+      package Boolean_Testing is new Utility.Test.Discrete_Types(Boolean);
+      
+   begin
+      Boolean_Testing.Assert_Equals(Actual, Expected, Message);
+   end Assert_Equals;
+   
 
    procedure Begin_Test
      (Title             : in     String) is

@@ -7,9 +7,11 @@
 --
 ------------------------------------------------------------------------
 
-package Utility is
+package Deflate.Decompression is
 
-   type Natural_64 is range 0 .. 2**63 - 1;
-   subtype Positive_64 is Natural_64 range 1 .. Natural_64'Last;
+   procedure Decode_Deflate_Block
+     (Stream            : in     Dynamic_Bit_Array;
+      Counter           : in out Natural_64;
+      Output            : out    Dynamic_Bit_Array);
 
-end Utility;
+end Deflate.Decompression;
