@@ -441,6 +441,7 @@ package body Deflate.Huffman is
       -- We use it only for bit lengths of the codes
       -- and build a canonical code from those lengths.
       Lengths := Calculate_Lengths(N);
+      Free_Subtree(N);
       Code.Build(Lengths);
       Code.Has_Weights := TRUE;
       Code.Weights := Weights;

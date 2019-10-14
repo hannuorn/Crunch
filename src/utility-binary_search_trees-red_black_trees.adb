@@ -364,6 +364,7 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
    -- Purpose:
    --    Update the node counter of a node and all of its ancestors.
    ---------------------------------------------------------------------
+   
    procedure Iterative_Update_Count
      (Z                 : in     RB_Node_Access) is
      
