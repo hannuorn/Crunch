@@ -3,7 +3,7 @@ package body Deflate.Literals_Only_Huffman is
 
    procedure Count_Weights
      (Input             : in     Dynamic_Bit_Array;
-      Weights           : out    Literals_Ónly_Huffman.Letter_Weights) is
+      Weights           : out    Literals_Only_Huffman.Letter_Weights) is
 
       C                 : Natural_64;
       B                 : Byte;
