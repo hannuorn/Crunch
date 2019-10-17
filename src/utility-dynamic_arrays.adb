@@ -82,6 +82,7 @@ package body Utility.Dynamic_Arrays is
       
    begin
       Free(Object.Data);
+      Object.Length := 0;
    end Finalize;
 
 
@@ -155,7 +156,9 @@ package body Utility.Dynamic_Arrays is
          if Left.Length = 0 then
             return TRUE;
          elsif Left.First = Right.First then
-            return Left.Data.all = Right.Data.all;
+            return 
+                  Left.Data(Left.First .. Left.Last) = 
+                  Right.Data(Right.First .. Right.Last);
          else
             return FALSE;
          end if;
@@ -165,7 +168,7 @@ package body Utility.Dynamic_Arrays is
    end "=";
 
 
-   function Get
+   function Get_Array
      (This              : in     Dynamic_Array)
                           return Fixed_Array is
       
@@ -175,7 +178,7 @@ package body Utility.Dynamic_Arrays is
       else
          return This.Data (This.First .. This.Last);
       end if;
-   end Get;
+   end Get_Array;
 
 
    ---------------------------------------------------------------------
@@ -305,7 +308,31 @@ package body Utility.Dynamic_Arrays is
       Values            : in     Dynamic_Array) is
       
    begin
-      Add(This, Values.Get);
+      Add(This, Values.Get_Array);
    end Add;
 
+
+   
+   procedure Read
+     (This              : in     Dynamic_Array;
+      Counter           : in out Index_Type;
+      Value             : out    Component_Type) is
+      
+   begin
+      Value := This.Data (Counter);
+      Counter := Index_Type'Succ(Counter);
+   end Read;
+   
+   
+   procedure Read
+     (This              : in     Dynamic_Array;
+      Counter           : in out Index_Type;
+      Values            : out    Fixed_Array) is
+      
+   begin
+      Values := This.Data (Counter .. Counter + Values'Length - 1);
+      Counter := Counter + Values'Length;
+   end Read;
+   
+   
 end Utility.Dynamic_Arrays;

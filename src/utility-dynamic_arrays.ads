@@ -61,13 +61,13 @@ package Utility.Dynamic_Arrays is
                           return Boolean;
    
    ---------------------------------------------------------------------
-   -- Get
+   -- Get_Array
    --
    -- Purpose:
    --    This function returns the contents of the dynamic array
    --    as a regular array.
    ---------------------------------------------------------------------
-   function Get
+   function Get_Array
      (This              : in     Dynamic_Array) 
                           return Fixed_Array;
 
@@ -94,7 +94,7 @@ package Utility.Dynamic_Arrays is
      (This              : in	 Dynamic_Array) 
                           return Natural_64
       with
-         Post => Length'Result = This.Get'Length;
+         Post => Length'Result = This.Get_Array'Length;
    
    
    ---------------------------------------------------------------------
@@ -190,7 +190,7 @@ package Utility.Dynamic_Arrays is
                           return Component_Type
       with 
          Pre => Index in First(This) .. Last(This),
-         Post => Get'Result = Fixed_Array(This.Get) (Index);
+         Post => Get'Result = This.Get_Array (Index);
 
 
    ---------------------------------------------------------------------   
@@ -208,6 +208,17 @@ package Utility.Dynamic_Arrays is
          Pre => Index in First(This) .. Last(This),
          Post => This.Get(Index => Index) = Value;
 
+   
+   procedure Read
+     (This              : in     Dynamic_Array;
+      Counter           : in out Index_Type;
+      Value             : out    Component_Type);
+   
+   procedure Read
+     (This              : in     Dynamic_Array;
+      Counter           : in out Index_Type;
+      Values            : out    Fixed_Array);
+   
    
 private
    

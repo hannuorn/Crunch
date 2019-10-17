@@ -31,8 +31,7 @@ with Test_Utility;
 with Test_Deflate;
 with Deflate;                 use Deflate;
 with Deflate.Compression;     use Deflate.Compression;
---with Deflate.Huffman;
---with Deflate.Fixed_Huffman;
+with Deflate.Decompression;   use Deflate.Decompression;
 
 
 package body Crunch_Main_Program is
@@ -51,9 +50,18 @@ package body Crunch_Main_Program is
 
    procedure Crunch_Demo is
    
+      use Dynamic_Bit_Arrays;
+      
+      Data              : Dynamic_Bit_Array;
+      B                 : Byte;
+      C                 : Natural_64 := 0;
+      
    begin
       Put_Line("Crunch - demo mode");
       Put_Line("");
+      Add(Data, Byte(65));
+      Read_Byte(Data, C, B);
+      Put_Line(Byte'Image(B));
       Run_Demo;
    end Crunch_Demo;
    
@@ -113,29 +121,37 @@ package body Crunch_Main_Program is
       Before            : Time;
       After             : Time;
       F                 : Float;
+      Data              : Dynamic_Bit_Array;
 
    begin
       Put_Line("Crunch");
       Put_Line("");
-      if Argument_Count = 1 then
-         Put_Line("Reading " & Argument(1) & "...");
-         Before := Clock;
-         Read_File(Argument(1), File);
-         After := Clock;
-         F := Float(File.Length)/8.0/1024.0/1024.0/Float(After - Before);
-         Put_Line("Size: " & Natural_64'Image(File.Length/8) & " bytes");
-         Put_Line("Reading time: " & Duration'Image(After - Before) & " seconds");
-         Put_Line("Speed: " & Float'Image(F) & " MB/s ");
-         Put_Line("");
-         Put_Line("Compressing...");
-         Before := Clock;
-         Compress(File, Compressed);
-         After := Clock;
-         F := Float(File.Length)/8.0/1024.0/1024.0/Float(After - Before);
-         Put_Line("Compression speed: " & Float'Image(F) & " MB/s");
-         Put_Line("");
-         Put_Line("Writing _crunch...");
-         Write_File(Argument(1) & "_crunch", Compressed);
+      if Argument_Count = 2 then
+         if Argument(1) = "-c" then
+            Put_Line("Reading " & Argument(2) & "...");
+            Before := Clock;
+            Read_File(Argument(2), File);
+            After := Clock;
+            F := Float(File.Length)/8.0/1024.0/1024.0/Float(After - Before);
+            Put_Line("Size: " & Natural_64'Image(File.Length/8) & " bytes");
+            Put_Line("Reading time: " & Duration'Image(After - Before) & " seconds");
+            Put_Line("Speed: " & Float'Image(F) & " MB/s ");
+            Put_Line("");
+            Put_Line("Compressing...");
+            Before := Clock;
+            Compress(File, Compressed);
+            After := Clock;
+            F := Float(File.Length)/8.0/1024.0/1024.0/Float(After - Before);
+            Put_Line("Compression speed: " & Float'Image(F) & " MB/s");
+            Put_Line("");
+            Put_Line("Writing _crunch...");
+            Write_File(Argument(2) & "_crunch", Compressed);
+         elsif Argument(1) = "-d" then
+            Put_Line("Decompressing " & Argument(2) & "...");
+            Read_File(Argument(2), File);
+            Decompress(File, Data);
+            Write_File(Argument(2) & "_deco", Data);
+         end if;
       end if;
    end Crunch_Run;
    
@@ -147,7 +163,7 @@ package body Crunch_Main_Program is
          Crunch_Test;
       elsif Argument_Count = 1 and then Argument(1) = "-demo" then
          Crunch_Demo;
-      else
+      elsif Argument_Count = 2 then
          Crunch_Run;
       end if;
    end Crunch_Main;

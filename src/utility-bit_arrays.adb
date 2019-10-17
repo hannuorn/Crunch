@@ -96,7 +96,7 @@ package body Utility.Bit_Arrays is
                            (Counter + Length - 1, Stream.Last);
    
    begin
-      Result.Set(Stream.Get(Counter .. Last));
+      Result.Set(Stream.Get_Array(Counter .. Last));
       Counter := Last + 1;
    end Read;
 
@@ -107,7 +107,7 @@ package body Utility.Bit_Arrays is
       Result            : out    Bit_Array) is
 
    begin
-      Result := Stream.Get(Counter .. Counter + Result'Length - 1);
+      Result := Stream.Get_Array(Counter .. Counter + Result'Length - 1);
       Counter := Counter + Result'Length;
    end Read;
 

@@ -38,8 +38,8 @@ package body Test_Utility.Test_Dynamic_Arrays is
       Assert(not A.Is_Empty);
       Assert(A.Length = FA'Length);
       
-      -- Check Get gives correct content
-      Assert(A.Get = FA);
+      -- Check Get_Array gives correct content
+      Assert(A.Get_Array = FA);
       
       -- Check First and Last
       Assert(A.First = FA'First);
@@ -48,7 +48,7 @@ package body Test_Utility.Test_Dynamic_Arrays is
       -- Check assignment and contents
       B := A;
       Assert(B.Length = FA'Length);
-      Assert(B.Get = FA);
+      Assert(B.Get_Array = FA);
       
       -- Get each individual element and check
       for I in FA'Range loop

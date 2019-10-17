@@ -9,9 +9,8 @@
 
 package Deflate.Decompression is
 
-   procedure Decode_Deflate_Block
-     (Stream            : in     Dynamic_Bit_Array;
-      Counter           : in out Natural_64;
+   procedure Decompress
+     (Input             : in     Dynamic_Bit_Array;
       Output            : out    Dynamic_Bit_Array);
 
 end Deflate.Decompression;

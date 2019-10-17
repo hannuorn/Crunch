@@ -1,4 +1,13 @@
+with Ada.Assertions;
+with Ada.Text_IO;       use Ada.Text_IO;
+with Utility.Test;      use Utility.Test;
+
+
 package body Deflate.Literals_Only_Huffman is
+
+   package Code_Length_Huffman is
+         new Deflate.Huffman(Literals_Only_Huffman.Limited_Bit_Length);
+
 
 
    procedure Count_Weights
@@ -19,13 +28,10 @@ package body Deflate.Literals_Only_Huffman is
    end Count_Weights;
 
 
+
    procedure Add_Huffman_Code
      (Output            : in out Dynamic_Bit_Array;
-      Counter           : in out Natural_64;
       Code              : in     Literals_Only_Huffman.Huffman_Code) is
-
-      package Code_Length_Huffman is
-        new Deflate.Huffman(Literals_Only_Huffman.Limited_Bit_Length);
 
       subtype Bits_3 is Bit_Array(1 .. 3);
 
@@ -49,48 +55,62 @@ package body Deflate.Literals_Only_Huffman is
 
       use Dynamic_Bit_Arrays;
 
-      Byte_Code_Lengths : Byte_Huffman.Huffman_Lengths := Code.Get_Lengths;
+      LO_Code_Lengths   : Literals_Only_Huffman.Huffman_Lengths := Code.Get_Lengths;
       Code_Len_Counts   : Code_Length_Huffman.Letter_Weights;
-      Len               : Byte_Huffman.Limited_Bit_Length;
+      Len               : Literals_Only_Huffman.Limited_Bit_Length;
       CLC               : Code_Length_Huffman.Huffman_Code;
-      CLC_Lengths       : Code_Length_Huffman.Huffman_Lengths(Byte_Huffman.Limited_Bit_Length);
+      CLC_Codewords     : Code_Length_Huffman.Huffman_Codewords;
+      CLC_Lengths       : Code_Length_Huffman.Huffman_Lengths
+                              (Literals_Only_Huffman.Limited_Bit_Length);
 
    begin
       -- Count code lengths
-      for B in Byte_Code_Lengths'Range loop
-         Len := Byte_Code_Lengths(B);
+      for B in LO_Code_Lengths'Range loop
+         Len := LO_Code_Lengths(B);
          Code_Len_Counts(Len) := Code_Len_Counts(Len) + 1;
       end loop;
       CLC.Build_Length_Limited
         (Length_Max => 7, Weights => Code_Len_Counts);
+      CLC_Codewords := CLC.Get_Codewords;
       CLC_Lengths := CLC.Get_Lengths;
+      Code_Length_Huffman.Print(CLC);
+      Code_Length_Huffman.Print(CLC_Codewords);
+
 
       -- HLIT = 257
-      Dynamic_Bit_Arrays.Add(Output, (1 .. 5 => 0));
+      Output.Add((1 .. 5 => 0));
       -- HDIST = 1
-      Add(Output, (1 .. 1 => 0));
+      Output.Add((1 .. 5 => 0));
       -- HCLEN = 19
-      Add(Output, (1 .. 4 => 1));
+      Output.Add((1 .. 4 => 1));
       -- Code length 0 for 16, 17, 18
-      Add(Output, (1 .. 3 * 3 => 0));
+      Output.Add((1 .. 3 * 3 => 0));
       -- RFC defines the order: 16, 17, 18,
       --    0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(0)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(8)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(7)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(9)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(6)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(10)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(5)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(11)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(4)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(12)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(3)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(13)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(2)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(14)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(1)));
-      Add(Output, CLC_Length_to_3_Bits(CLC_Lengths(15)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(0)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(8)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(7)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(9)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(6)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(10)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(5)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(11)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(4)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(12)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(3)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(13)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(2)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(14)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(1)));
+      Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(15)));
+
+      for I in LO_Code_Lengths'Range loop
+         Output.Add(CLC_Codewords(LO_Code_Lengths(I)));
+      end loop;
+
+      -- One distance code of zero bits
+      Output.Add(CLC_Codewords(0));
+
    end Add_Huffman_Code;
 
 
@@ -99,6 +119,7 @@ package body Deflate.Literals_Only_Huffman is
       Output            : out    Dynamic_Bit_Array) is
 
       use Literals_Only_Huffman;
+      use Dynamic_Bit_Arrays;
 
       Weights           : Letter_Weights;
       HC                : Huffman_Code;
@@ -107,13 +128,18 @@ package body Deflate.Literals_Only_Huffman is
       B                 : Byte;
 
    begin
-      Output := Dynamic_Bit_Arrays.Empty_Dynamic_Array;
       Count_Weights(Input, Weights);
-      Weights(256) := 1;
+      Weights(End_of_Block) := 1;
       Build_Length_Limited(HC, 15, Weights);
       HC_Codewords := HC.Get_Codewords;
       Print(HC_Codewords);
       Print(HC);
+
+      -- Block header: BFINAL = 1, BTYPE = 10  (dynamic Huffman)
+      Output.Add(BFINAL_1);
+      Output.Add(BTYPE_Dynamic_Huffman);
+
+      Add_Huffman_Code(Output, HC);
 
       Output.Expect_Size(Input.Length);
       C := Input.First;
@@ -121,6 +147,151 @@ package body Deflate.Literals_Only_Huffman is
          Read_Byte(Input, C, B);
          Output.Add(HC_Codewords(Literals_Only_Alphabet(B)));
       end loop;
+      Print("Counter = " & Natural_64'Image(C));
+      Print("Length = " & Natural_64'Image(Input.Length));
+      Print("First = " & Natural_64'Image(Input.First));
+      Print("Last  = " & Natural_64'Image(Input.Last));
+
+      Output.Add(HC_Codewords(End_of_Block));
    end Make_Single_Block;
 
+
+   procedure Decompress_Single_Block
+     (Input             : in     Dynamic_Bit_Array;
+      Output            : out    Dynamic_Bit_Array) is
+
+      use Dynamic_Bit_Arrays;
+
+      subtype Bits_3 is Bit_Array (1 .. 3);
+
+      function Bits_3_to_CLC_Length
+        (B3                : in     Bits_3)
+         return Code_Length_Huffman.Limited_Bit_Length is
+
+         use Code_Length_Huffman;
+      begin
+         return
+               4 * Bit_Length(B3 (1)) +
+               2 * Bit_Length(B3 (2)) +
+               1 * Bit_Length(B3 (3));
+      end Bits_3_to_CLC_Length;
+
+      use Literals_Only_Huffman;
+
+      C                 : Natural_64;
+      B1                : Bit;
+      B2                : Bit_Array (1 .. 2);
+      B3                : Bits_3;
+      B4                : Bit_Array (1 .. 4);
+      B5                : Bit_Array (1 .. 5);
+      CLC_Lengths       : Code_Length_Huffman.Huffman_Lengths
+                              (Literals_Only_Huffman.Limited_Bit_Length);
+      CLC               : Code_Length_Huffman.Huffman_Code;
+      Found             : Boolean;
+      L                 : Literals_Only_Huffman.Limited_Bit_Length;
+      Lengths           : Literals_Only_Huffman.Huffman_Lengths(Literals_Only_Alphabet);
+      HC                : Literals_Only_Huffman.Huffman_Code;
+      LO                : Literals_Only_Alphabet;
+
+   begin
+      Output := Dynamic_Bit_Arrays.Empty_Dynamic_Array;
+      C := Input.First;
+
+      Input.Read(C, B1);
+      Assert(B1 = BFINAL_1);
+
+      Input.Read(C, B2);
+      Assert(B2 = BTYPE_Dynamic_Huffman);
+
+      -- HLIT = 0
+      Input.Read(C, B5);
+      Assert(B5 = (1 .. 5 => 0));
+
+      -- HDIST = 0
+      Input.Read(C, B5);
+      Assert(B5 = (1 .. 5 => 0));
+
+      -- HCLEN = 15
+      Input.Read(C, B4);
+      Assert(B4 = (1 .. 4 => 1));
+
+      -- 16, 17, 18
+      Input.Read(C, B3);
+      Assert(B3 = (1 .. 3 => 0));
+      Input.Read(C, B3);
+      Assert(B3 = (1 .. 3 => 0));
+      Input.Read(C, B3);
+      Assert(B3 = (1 .. 3 => 0));
+
+      -- 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
+      Input.Read(C, B3);
+      CLC_Lengths(0) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(8) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(7) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(9) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(6) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(10) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(5) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(11) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(4) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(12) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(3) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(13) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(2) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(14) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(1) := Bits_3_to_CLC_Length(B3);
+      Input.Read(C, B3);
+      CLC_Lengths(15) := Bits_3_to_CLC_Length(B3);
+
+      CLC.Build(CLC_Lengths);
+
+      CLC.Print;
+
+      for I in Literals_Only_Alphabet'Range loop
+         CLC.Find(Input, C, Found, L);
+         Assert(Found);
+         Lengths(I) := L;
+      end loop;
+
+      -- One distance code of zero
+      CLC.Find(Input, C, Found, L);
+      Assert(Found);
+      Assert(L = 0);
+
+      HC.Build(Lengths);
+      HC.Print;
+
+      -- data
+      loop
+         HC.Find(Input, C, Found, LO);
+         Assert(Found);
+         if LO = End_of_Block then
+            exit;
+         else
+            Add(Output, Byte(LO));
+         end if;
+      end loop;
+
+
+   exception
+      when Ada.Assertions.Assertion_Error =>
+         null;
+
+   end Decompress_Single_Block;
+
 end Deflate.Literals_Only_Huffman;
+

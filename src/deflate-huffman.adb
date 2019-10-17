@@ -97,7 +97,7 @@ package body Deflate.Huffman is
                           return String is
                           
       S                 : String(1 .. Integer(Codeword.Length));
-      C                 : Bit_Array := Codeword.Get;
+      C                 : Bit_Array := Codeword.Get_Array;
       I                 : Natural;
       
    begin
@@ -183,7 +183,7 @@ package body Deflate.Huffman is
       L                 : in     Letter;
       Codeword          : in     Huffman_Codeword) is
       
-      C                 : Bit_Array := Codeword.Get;
+      C                 : Bit_Array := Codeword.Get_Array;
       Node              : Huffman_Tree_Node_Access;
       
    begin
