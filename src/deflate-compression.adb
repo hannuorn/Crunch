@@ -10,16 +10,19 @@
 with Utility.Bit_Arrays;
 with Deflate.Fixed_Huffman;   use Deflate.Fixed_Huffman;
 with Deflate.Huffman;
+with Deflate.Literals_Only_Huffman;
 
 
 package body Deflate.Compression is
+
+   package Byte_Huffman is new Deflate.Huffman (Utility.Bit_Arrays.Byte);
+
 
 
    procedure Make_Single_Block_With_Fixed_Huffman
      (Input             : in     Dynamic_Bit_Array;
       Output            : out    Dynamic_Bit_Array) is
 
-      package Byte_Huffman is new Deflate.Huffman (Utility.Bit_Arrays.Byte);
 
       use Utility.Bit_Arrays.Dynamic_Bit_Arrays;
       use Utility;
@@ -56,8 +59,10 @@ package body Deflate.Compression is
       use type Dynamic_Bit_Array;
 
    begin
---      Demo_Huffman_Coding(Input);
-      Make_Single_Block_With_Fixed_Huffman(Input, Output);
+      -- Demo_Huffman_Coding(Input);
+      -- Make_Single_Block_With_Fixed_Huffman(Input, Output);
+      -- Make_Single_Block_With_Optimal_Huffman(Input, Output);
+      Deflate.Literals_Only_Huffman.Make_Single_Block(Input, Output);
    end Compress;
 
 end Deflate.Compression;

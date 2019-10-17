@@ -56,7 +56,7 @@ package Utility.Bit_Arrays is
    procedure Add
      (Stream            : in out Dynamic_Bit_Array;
       B                 : in     Byte);
-
+   
    procedure Read
      (Stream            : in     Dynamic_Bit_Array;
       Counter           : in out Natural_64;
