@@ -25,8 +25,9 @@ package body Deflate is
    procedure Run_Demo is
    
    begin
-      Demo_Huffman_Tree_Building;
-      Demo_Bit_Lengths_to_Huffman_Tree;
+      Demo_Build_from_Frequencies;
+      --Demo_Huffman_Tree_Building;
+      --Demo_Bit_Lengths_to_Huffman_Tree;
    end Run_Demo;
    
 end Deflate;

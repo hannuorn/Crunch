@@ -19,7 +19,7 @@
 ------------------------------------------------------------------------
 
 with Ada.Finalization;
-with Utility.Bit_Arrays;         use Utility.Bit_Arrays;
+with Utility.Bits_and_Bytes;     use Utility.Bits_and_Bytes;
 
 
 generic

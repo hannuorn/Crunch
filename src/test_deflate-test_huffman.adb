@@ -9,7 +9,7 @@
 
 with Utility.Test;            use Utility.Test;
                               use Utility;
-with Utility.Bit_Arrays;      use Utility.Bit_Arrays;
+with Utility.Bits_and_Bytes;  use Utility.Bits_and_Bytes;
 with Deflate.Huffman;
 
 

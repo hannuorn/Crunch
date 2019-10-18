@@ -8,16 +8,17 @@
 ------------------------------------------------------------------------
 
 with Ada.Text_IO;             use Ada.Text_IO;
-with Utility.Bit_Arrays;
+with Utility.Bits_and_Bytes;
 with Utility.Test;
 with Deflate.Fixed_Huffman;   use Deflate.Fixed_Huffman;
 with Deflate.Huffman;
 with Deflate.Literals_Only_Huffman;
+with Deflate.LZ77;
 
 
 package body Deflate.Compression is
 
-   package Byte_Huffman is new Deflate.Huffman (Utility.Bit_Arrays.Byte);
+   package Byte_Huffman is new Deflate.Huffman (Utility.Bits_and_Bytes.Byte);
 
 
 
@@ -26,7 +27,7 @@ package body Deflate.Compression is
       Output            : out    Dynamic_Bit_Array) is
 
 
-      use Utility.Bit_Arrays.Dynamic_Bit_Arrays;
+      use Utility.Bits_and_Bytes.Dynamic_Bit_Arrays;
       use Utility;
       use Deflate.Fixed_Huffman.Literal_Length_Codes;
 

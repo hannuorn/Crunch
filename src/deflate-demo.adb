@@ -8,7 +8,7 @@
 ------------------------------------------------------------------------
 
 with Ada.Text_IO;                use Ada.Text_IO;
-with Utility.Bit_Arrays;
+with Utility.Bits_and_Bytes;
 with Utility.Dynamic_Arrays;
 with Deflate.Huffman;
 
@@ -125,10 +125,10 @@ package body Deflate.Demo is
    procedure Demo_Huffman_Coding
      (Input             : in     Dynamic_Bit_Array) is
    
-      package Byte_Huffman is new Deflate.Huffman (Utility.Bit_Arrays.Byte);
+      package Byte_Huffman is new Deflate.Huffman (Utility.Bits_and_Bytes.Byte);
       use Byte_Huffman;
       
-      use Utility.Bit_Arrays.Dynamic_Bit_Arrays;
+      use Utility.Bits_and_Bytes.Dynamic_Bit_Arrays;
       
       C                 : Natural_64 := Input.First;
       B                 : Byte;
@@ -160,7 +160,7 @@ package body Deflate.Demo is
 
    procedure Demo_Build_from_Frequencies is
    
-      package Byte_Huffman is new Deflate.Huffman(Byte);
+      package Byte_Huffman is new Deflate.Huffman(Byte, 64);
       package Character_Huffman is new Deflate.Huffman(Character);
    
       use Byte_Huffman;
@@ -180,12 +180,12 @@ package body Deflate.Demo is
       Char_Wt('D') := 20;
       Char_Wt('E') := 20;
       Char_Wt('F') := 30;
-      Build_Length_Limited(Char_HC, 3, Char_Wt);
-      Char_Lengths := Char_HC.Get_Lengths;
-      Print(Char_Lengths);
-      Char_HC.Build(Char_Lengths);
-      Put_Line("3-BIT LIMITED CHARACTER CODE");
-      Char_HC.Print;
+      -- Build_Length_Limited(Char_HC, 3, Char_Wt);
+      -- Char_Lengths := Char_HC.Get_Lengths;
+      -- Print(Char_Lengths);
+      -- Char_HC.Build(Char_Lengths);
+      -- Put_Line("3-BIT LIMITED CHARACTER CODE");
+      -- Char_HC.Print;
       
       for I in Weight'Range loop
          Weight(I) := Natural_64(I)**2 + 1;
@@ -195,10 +195,10 @@ package body Deflate.Demo is
       --Print("UNLIMITED-LENGTH CODE");
       --HC.Print;
       Put_Line("");
-      Build_Length_Limited(HC, 15, Weight);
-      Lengths := HC.Get_Lengths;
+      Build_Length_Limited(HC, 32, Weight);
+      --Lengths := HC.Get_Lengths;
       --Print(Lengths);
-      Build(HC, Lengths);
+      --Build(HC, Lengths);
       Put_Line("LIMITED-LENGTH CODE");
       Put_Line("");
       Print(HC.Get_Codewords);

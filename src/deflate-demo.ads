@@ -25,4 +25,6 @@ private package Deflate.Demo is
    procedure Demo_Huffman_Coding
      (Input             : in     Dynamic_Bit_Array);
 
+   procedure Demo_Build_from_Frequencies;
+   
 end Deflate.Demo;

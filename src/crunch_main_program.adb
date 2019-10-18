@@ -20,13 +20,14 @@
 with Ada.Calendar;            use Ada.Calendar;
 with Ada.Command_Line;        use Ada.Command_Line;
 with Ada.Direct_IO;
+with Ada.Float_Text_IO;
 with Ada.Sequential_IO;
 with Ada.Streams;             use Ada.Streams;
 with Ada.Streams.Stream_IO;   use Ada.Streams.Stream_IO;
 with Ada.Text_IO;             use Ada.Text_IO;
 with Utility;                 use Utility;
 with Utility.Dynamic_Arrays;
-with Utility.Bit_Arrays;      use Utility.Bit_Arrays;
+with Utility.Bits_and_Bytes;  use Utility.Bits_and_Bytes;
 with Test_Utility;
 with Test_Deflate;
 with Deflate;                 use Deflate;
@@ -53,15 +54,12 @@ package body Crunch_Main_Program is
       use Dynamic_Bit_Arrays;
       
       Data              : Dynamic_Bit_Array;
-      B                 : Byte;
+--      B                 : Byte;
       C                 : Natural_64 := 0;
       
    begin
       Put_Line("Crunch - demo mode");
       Put_Line("");
-      Add(Data, Byte(65));
-      Read_Byte(Data, C, B);
-      Put_Line(Byte'Image(B));
       Run_Demo;
    end Crunch_Demo;
    
@@ -116,6 +114,8 @@ package body Crunch_Main_Program is
    
    procedure Crunch_Run is
    
+      package Flo_IO is new Ada.Text_IO.Float_IO (Float);
+      
       File              : Dynamic_Bit_Array;
       Compressed        : Dynamic_Bit_Array;
       Before            : Time;
@@ -134,16 +134,20 @@ package body Crunch_Main_Program is
             After := Clock;
             F := Float(File.Length)/8.0/1024.0/1024.0/Float(After - Before);
             Put_Line("Size: " & Natural_64'Image(File.Length/8) & " bytes");
-            Put_Line("Reading time: " & Duration'Image(After - Before) & " seconds");
-            Put_Line("Speed: " & Float'Image(F) & " MB/s ");
+            --Put_Line("Reading time: " & Duration'Image(After - Before) & " seconds");
+            Put("Speed: ");
+            Ada.Float_Text_IO.Put(Item => F, Fore => 3, Aft => 1, Exp => 0);
+            Put_Line(" MB/s");
+--            Put_Line("Speed: " & Float'Image(F) & " MB/s ");
             Put_Line("");
             Put_Line("Compressing...");
             Before := Clock;
             Compress(File, Compressed);
             After := Clock;
             F := Float(File.Length)/8.0/1024.0/1024.0/Float(After - Before);
-            Put_Line("Compression speed: " & Float'Image(F) & " MB/s");
-            Put_Line("");
+            Put_Line("Compression speed: ");
+            Ada.Float_Text_IO.Put(Item => F, Fore => 3, Aft => 1, Exp => 0);
+            Put_Line(" MB/s");
             Put_Line("Writing _crunch...");
             Write_File(Argument(2) & "_crunch", Compressed);
          elsif Argument(1) = "-d" then

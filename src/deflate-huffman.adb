@@ -651,6 +651,8 @@ package body Deflate.Huffman is
       -- Print(Lengths);
       -- Put_Line("--- P-M algorithm results complete");
       Build(Code, Lengths);
+      Code.Has_Weights := TRUE;
+      Code.Weights := Weights;
    end Build_Length_Limited;
 
 

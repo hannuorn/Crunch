@@ -333,6 +333,20 @@ package body Utility.Dynamic_Arrays is
       Values := This.Data (Counter .. Counter + Values'Length - 1);
       Counter := Counter + Values'Length;
    end Read;
+
+
+   procedure Read
+     (This              : in     Dynamic_Array;
+      Counter           : in out Index_Type;
+      Length            : in     Index_Type;
+      Values            : out    Dynamic_Array) is
+      
+      Result            : Fixed_Array (Counter .. Counter + Length - 1);
+      
+   begin
+      Read(This, Counter, Result);
+      Set(Values, Result);
+   end Read;
    
    
 end Utility.Dynamic_Arrays;
