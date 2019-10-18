@@ -338,15 +338,42 @@ package body Utility.Dynamic_Arrays is
    procedure Read
      (This              : in     Dynamic_Array;
       Counter           : in out Index_Type;
-      Length            : in     Index_Type;
+      Length            : in     Natural_64;
       Values            : out    Dynamic_Array) is
       
-      Result            : Fixed_Array (Counter .. Counter + Length - 1);
+      Result            : Fixed_Array 
+        (Counter .. Index_Type'Val(Index_Type'Pos(Counter) + Length - 1));
       
    begin
       Read(This, Counter, Result);
       Set(Values, Result);
    end Read;
+
    
+   procedure Get
+     (This              : in     Dynamic_Array;
+      Counter           : in     Index_Type;
+      Length            : in     Natural_64;
+      Values            : out    Dynamic_Array) is
+      
+      C                 : Index_Type;
+      
+   begin
+      C := Counter;
+      Read(This, C, Length, Values);
+   end Get;
+
+   
+   procedure Get
+     (This              : in     Dynamic_Array;
+      Counter           : in     Index_Type;
+      Values            : out    Fixed_Array) is
+      
+      C                 : Index_Type;
+      
+   begin
+      C := Counter;
+      Read(This, C, Values);
+   end Get;
    
 end Utility.Dynamic_Arrays;

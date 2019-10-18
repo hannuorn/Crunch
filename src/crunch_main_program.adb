@@ -33,6 +33,7 @@ with Test_Deflate;
 with Deflate;                 use Deflate;
 with Deflate.Compression;     use Deflate.Compression;
 with Deflate.Decompression;   use Deflate.Decompression;
+with Deflate.LZ77;            use Deflate.LZ77;
 
 
 package body Crunch_Main_Program is
@@ -88,7 +89,32 @@ package body Crunch_Main_Program is
       end loop;
       Close(F);
    end Read_File;
-
+   
+   
+   procedure Read_File_as_Bytes
+     (Name              : in     String;
+      Data              : out    Dynamic_Byte_Array) is
+      
+      package Byte_Sequential_IO is new Ada.Sequential_IO (Byte);
+      use Byte_Sequential_IO;
+      use Dynamic_Byte_Arrays;
+      
+      F                 : Ada.Streams.Stream_IO.File_Type;
+      Bytes             : Stream_Element_Array (1 .. 1_000_000);
+      Last              : Stream_Element_Offset;
+      
+   begin
+      Open(F, In_File, Name);
+      Data.Expect_Size(Natural_64(Size(F)));
+      while not End_of_File(F) loop
+         Read(F, Bytes, Last);
+         for I in Bytes'First .. Last loop
+            Add(Data, Byte(Bytes(I)));
+         end loop;
+      end loop;
+      Close(F);
+   end Read_File_as_Bytes;
+   
 
    procedure Write_File
      (Name              : in     String;
@@ -122,6 +148,8 @@ package body Crunch_Main_Program is
       After             : Time;
       F                 : Float;
       Data              : Dynamic_Bit_Array;
+      Bytes             : Dynamic_Byte_Array;
+      LLDs              : Dynamic_LLD_Array;
 
    begin
       Put_Line("Crunch");
@@ -155,6 +183,11 @@ package body Crunch_Main_Program is
             Read_File(Argument(2), File);
             Decompress(File, Data);
             Write_File(Argument(2) & "_deco", Data);
+         elsif Argument(1) = "-lz77" then
+            Put_Line("Reading " & Argument(2) & "...");
+            Before := Clock;
+            Read_File_as_Bytes(Argument(2), Bytes);
+            Deflate.LZ77.Compress(Bytes, LLDs);
          end if;
       end if;
    end Crunch_Run;

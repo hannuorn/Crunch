@@ -10,7 +10,8 @@
 with Ada.Text_IO;             use Ada.Text_IO;
 with Utility.Bits_and_Bytes;
 with Utility.Test;
-with Deflate.Fixed_Huffman;   use Deflate.Fixed_Huffman;
+with Deflate.Literal_Length_and_Distance;   
+use  Deflate.Literal_Length_and_Distance;   
 with Deflate.Huffman;
 with Deflate.Literals_Only_Huffman;
 with Deflate.LZ77;
@@ -29,7 +30,7 @@ package body Deflate.Compression is
 
       use Utility.Bits_and_Bytes.Dynamic_Bit_Arrays;
       use Utility;
-      use Deflate.Fixed_Huffman.Literal_Length_Codes;
+      use Literal_Length_Huffman;
 
       C_Input           : Natural_64 := Input.First;
       B                 : Byte;
@@ -49,7 +50,7 @@ package body Deflate.Compression is
       Add(Output, BTYPE_Fixed_Huffman);
       while C_Input <= Input.Last loop
          Read_Byte(Input, C_Input, B);
-         Add(Output, FH_Codewords(Literal_Length_Symbol(B)));
+         Add(Output, FH_Codewords(Literal_Length_Letter(B)));
       end loop;
       Add(Output, FH_Codewords(End_of_Block));
    end Make_Single_Block_With_Fixed_Huffman;

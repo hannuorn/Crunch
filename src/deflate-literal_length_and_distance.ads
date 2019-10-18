@@ -10,10 +10,10 @@
 
 ------------------------------------------------------------------------
 --
--- package Deflate.Fixed_Huffman
--- 
+-- package Deflate.Literal_Length_and_Distance
+--
 -- Purpose:
---    Definitions of the fixed Huffman code. 
+--    Definitions of the fixed Huffman code.
 --    Refer to RFC 1951, 3.2.5 and 3.2.6.
 --
 ------------------------------------------------------------------------
@@ -21,20 +21,28 @@
 with Deflate.Huffman;
 
 
-package Deflate.Fixed_Huffman is
+package Deflate.Literal_Length_and_Distance is
 
    type Literal_Length_Alphabet is range 0 .. 287;
-   subtype Literal_Length_Symbol is Literal_Length_Alphabet range 0 .. 285;
-   
-   package Literal_Length_Codes is new Deflate.Huffman(Literal_Length_Alphabet);
-   use Literal_Length_Codes;
-   
-   
+   subtype Literal_Length_Letter is Literal_Length_Alphabet range 0 .. 285;
+   subtype Length_Letter is Literal_Length_Letter range 257 .. 285;
+
+   type Distance_Letter is range 0 .. 29;
+
+   package Literal_Length_Huffman is
+     new Deflate.Huffman (Literal_Length_Alphabet);
+
+   package Distance_Huffman is
+     new Deflate.Huffman (Distance_Letter);
+
+
    -- RFC 3.2.5
-   
-   End_of_Block            : constant Literal_Length_Symbol := 256;
-   
-   Length_Extra_Bits       : constant Huffman_Lengths (257 .. 285):=
+
+   End_of_Block            : constant Literal_Length_Letter := 256;
+
+   Length_Extra_Bits       : constant
+     Literal_Length_Huffman.Huffman_Naturals (257 .. 285):=
+
      (257 .. 264  => 0,
       265 .. 268  => 1,
       269 .. 272  => 2,
@@ -42,8 +50,12 @@ package Deflate.Fixed_Huffman is
       277 .. 280  => 4,
       281 .. 284  => 5,
       285         => 0);
-      
-   First_Length            : constant Huffman_Naturals (257 .. 285) := 
+
+   type Deflate_Length is range 3 .. 258;
+   type Deflate_Distance is range 1 .. 32768;
+
+   First_Length            : constant array (Length_Letter) of Deflate_Length :=
+
      (257 => 3,
       258 => 4,
       259 => 5,
@@ -73,8 +85,10 @@ package Deflate.Fixed_Huffman is
       283 => 195,
       284 => 227,
       285 => 258);
-      
-   Distance_Extra_Bits     : constant Huffman_Lengths (0 .. 29) :=
+
+   Distance_Extra_Bits     : constant
+     Distance_Huffman.Huffman_Naturals (0 .. 29) :=
+
      ( 0 .. 3  => 0,
        4 .. 5  => 1,
        6 .. 7  => 2,
@@ -89,8 +103,11 @@ package Deflate.Fixed_Huffman is
       24 .. 25 => 11,
       26 .. 27 => 12,
       28 .. 29 => 13);
-      
-   First_Distance          : constant Huffman_Naturals (0 .. 29) :=
+
+   Max_Distance            : constant := 32768;
+
+   First_Distance          : constant array (Distance_Letter) of Deflate_Distance :=
+
      ( 0 => 1,
        1 => 2,
        2 => 3,
@@ -121,20 +138,16 @@ package Deflate.Fixed_Huffman is
       27 => 12289,
       28 => 16385,
       29 => 24577);
-       
-       
+
+
    -- RFC 3.2.6
-   
-   Fixed_Huffman_Bit_Lengths  : constant Huffman_Lengths(Literal_Length_Alphabet) :=
+
+   Fixed_Huffman_Bit_Lengths  : constant
+     Literal_Length_Huffman.Huffman_Lengths(Literal_Length_Alphabet) :=
+
      (  0 .. 143  => 8,
       144 .. 255  => 9,
       256 .. 279  => 7,
       280 .. 287  => 8);
-      
---   Fixed_Huffman_Code         : constant Huffman_Code := 
---                                    Build(Fixed_Huffman_Bit_Lengths);
-   
---   Fixed_Huffman_Codewords    : constant Huffman_Codewords := 
---                                    Get_Codewords(Fixed_Huffman_Code);
 
-end Deflate.Fixed_Huffman;
+end Deflate.Literal_Length_and_Distance;

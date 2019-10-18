@@ -205,9 +205,11 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
       X                 : RB_Node_Access := Z;
                           
    begin
-      while X.Left /= null loop
-         X := X.Left;
-      end loop;
+      if X /= null then
+         while X.Left /= null loop
+            X := X.Left;
+         end loop;
+      end if;
       return X;
    end Tree_Minimum;
    
@@ -219,9 +221,11 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
       X                 : RB_Node_Access := Z;
                           
    begin
-      while X.Right /= null loop
-         X := X.Right;
-      end loop;
+      if X /= null then
+         while X.Right /= null loop
+            X := X.Right;
+         end loop;
+      end if;
       return X;
    end Tree_Maximum;
    
@@ -234,15 +238,19 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
       Y                 : RB_Node_Access;
                           
    begin
-      if X.Right /= null then
-         return Tree_Minimum(X.Right);
+      if X /= null then
+         if X.Right /= null then
+            return Tree_Minimum(X.Right);
+         else
+            Y := X.P;
+            while Y /= null and then X = Y.Right loop
+               X := Y;
+               Y := Y.P;
+            end loop;
+            return Y;
+         end if;
       else
-         Y := X.P;
-         while Y /= null and then X = Y.Right loop
-            X := Y;
-            Y := Y.P;
-         end loop;
-         return Y;
+         return null;
       end if;
    end Tree_Successor;
    
@@ -255,15 +263,19 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
       Y                 : RB_Node_Access;
                           
    begin
-      if X.Left /= null then
-         return Tree_Maximum(X.Left);
+      if X /= null then
+         if X.Left /= null then
+            return Tree_Maximum(X.Left);
+         else
+            Y := X.P;
+            while Y /= null and then X = Y.Left loop
+               X := Y;
+               Y := Y.P;
+            end loop;
+            return Y;
+         end if;
       else
-         Y := X.P;
-         while Y /= null and then X = Y.Left loop
-            X := Y;
-            Y := Y.P;
-         end loop;
-         return Y;
+         return null;
       end if;
    end Tree_Predecessor;
    

@@ -222,8 +222,19 @@ package Utility.Dynamic_Arrays is
    procedure Read
      (This              : in     Dynamic_Array;
       Counter           : in out Index_Type;
-      Length            : in     Index_Type;
+      Length            : in     Natural_64;
       Values            : out    Dynamic_Array);
+
+   procedure Get
+     (This              : in     Dynamic_Array;
+      Counter           : in     Index_Type;
+      Length            : in     Natural_64;
+      Values            : out    Dynamic_Array);
+
+   procedure Get
+     (This              : in     Dynamic_Array;
+      Counter           : in     Index_Type;
+      Values            : out    Fixed_Array);
 
    
 private
