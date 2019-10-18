@@ -16,7 +16,7 @@ To decompress:
 For now, the decompressed file is named filename.txt_crunch_deco to avoid messing
 with the original.
 
-You can Win-64 executable in the repo at
+You can find Win-64 executable in the repo at
 
     obj/opt/crunch.exe
 
