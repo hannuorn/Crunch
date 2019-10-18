@@ -6,7 +6,7 @@ with Utility.Test;      use Utility.Test;
 package body Deflate.Literals_Only_Huffman is
 
    package Code_Length_Huffman is
-         new Deflate.Huffman(Literals_Only_Huffman.Limited_Bit_Length);
+         new Deflate.Huffman(Literals_Only_Huffman.Limited_Bit_Length, 7);
 
 
 
@@ -29,7 +29,7 @@ package body Deflate.Literals_Only_Huffman is
 
 
 
-   procedure Add_Huffman_Code
+   procedure Encode_Huffman_Code
      (Output            : in out Dynamic_Bit_Array;
       Code              : in     Literals_Only_Huffman.Huffman_Code) is
 
@@ -69,19 +69,22 @@ package body Deflate.Literals_Only_Huffman is
          Len := LO_Code_Lengths(B);
          Code_Len_Counts(Len) := Code_Len_Counts(Len) + 1;
       end loop;
+      -- 0 needs to be included in the alphabet
+      if Code_Len_Counts(0) = 0 then
+         Code_Len_Counts(0) := 1;
+      end if;
+
       CLC.Build_Length_Limited
         (Length_Max => 7, Weights => Code_Len_Counts);
       CLC_Codewords := CLC.Get_Codewords;
       CLC_Lengths := CLC.Get_Lengths;
-      Code_Length_Huffman.Print(CLC);
-      Code_Length_Huffman.Print(CLC_Codewords);
 
 
-      -- HLIT = 257
+      -- HLIT = 0  (257)
       Output.Add((1 .. 5 => 0));
-      -- HDIST = 1
+      -- HDIST = 0  (1)
       Output.Add((1 .. 5 => 0));
-      -- HCLEN = 19
+      -- HCLEN = 15  (19)
       Output.Add((1 .. 4 => 1));
       -- Code length 0 for 16, 17, 18
       Output.Add((1 .. 3 * 3 => 0));
@@ -108,10 +111,9 @@ package body Deflate.Literals_Only_Huffman is
          Output.Add(CLC_Codewords(LO_Code_Lengths(I)));
       end loop;
 
-      -- One distance code of zero bits
+      -- One distance code of zero bits (means no distance codes used)
       Output.Add(CLC_Codewords(0));
-
-   end Add_Huffman_Code;
+   end Encode_Huffman_Code;
 
 
    procedure Make_Single_Block
@@ -132,14 +134,12 @@ package body Deflate.Literals_Only_Huffman is
       Weights(End_of_Block) := 1;
       Build_Length_Limited(HC, 15, Weights);
       HC_Codewords := HC.Get_Codewords;
-      Print(HC_Codewords);
-      Print(HC);
 
       -- Block header: BFINAL = 1, BTYPE = 10  (dynamic Huffman)
       Output.Add(BFINAL_1);
       Output.Add(BTYPE_Dynamic_Huffman);
 
-      Add_Huffman_Code(Output, HC);
+      Encode_Huffman_Code(Output, HC);
 
       Output.Expect_Size(Input.Length);
       C := Input.First;
@@ -147,10 +147,6 @@ package body Deflate.Literals_Only_Huffman is
          Read_Byte(Input, C, B);
          Output.Add(HC_Codewords(Literals_Only_Alphabet(B)));
       end loop;
-      Print("Counter = " & Natural_64'Image(C));
-      Print("Length = " & Natural_64'Image(Input.Length));
-      Print("First = " & Natural_64'Image(Input.First));
-      Print("Last  = " & Natural_64'Image(Input.Last));
 
       Output.Add(HC_Codewords(End_of_Block));
    end Make_Single_Block;
@@ -192,6 +188,7 @@ package body Deflate.Literals_Only_Huffman is
       Lengths           : Literals_Only_Huffman.Huffman_Lengths(Literals_Only_Alphabet);
       HC                : Literals_Only_Huffman.Huffman_Code;
       LO                : Literals_Only_Alphabet;
+      X                 : Natural_64;
 
    begin
       Output := Dynamic_Bit_Arrays.Empty_Dynamic_Array;
@@ -259,23 +256,21 @@ package body Deflate.Literals_Only_Huffman is
 
       CLC.Build(CLC_Lengths);
 
-      CLC.Print;
-
       for I in Literals_Only_Alphabet'Range loop
          CLC.Find(Input, C, Found, L);
          Assert(Found);
          Lengths(I) := L;
       end loop;
 
+      HC.Build(Lengths);
+
       -- One distance code of zero
       CLC.Find(Input, C, Found, L);
       Assert(Found);
       Assert(L = 0);
 
-      HC.Build(Lengths);
-      HC.Print;
-
       -- data
+      X := 0;
       loop
          HC.Find(Input, C, Found, LO);
          Assert(Found);
@@ -283,13 +278,14 @@ package body Deflate.Literals_Only_Huffman is
             exit;
          else
             Add(Output, Byte(LO));
+            X := X + 1;
          end if;
       end loop;
 
 
    exception
       when Ada.Assertions.Assertion_Error =>
-         null;
+         Put_Line("Decompress assertion error...");
 
    end Decompress_Single_Block;
 

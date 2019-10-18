@@ -4,7 +4,7 @@ with Deflate.Huffman;
 private package Deflate.Literals_Only_Huffman is
 
    type Literals_Only_Alphabet is range 0 .. 256;
-   package Literals_Only_Huffman is new Deflate.Huffman(Literals_Only_Alphabet);
+   package Literals_Only_Huffman is new Deflate.Huffman(Literals_Only_Alphabet, 15);
 
    End_of_Block         : constant Literals_Only_Alphabet := 256;
 

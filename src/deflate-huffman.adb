@@ -466,7 +466,7 @@ package body Deflate.Huffman is
       Weights           : in     Letter_Weights) is
       
       package Letter_Trees is new Utility.Binary_Search_Trees
-            (Letter, Letter, "<", "="); use Letter_Trees;
+            (Letter, Natural_64, "<", "="); use Letter_Trees;
       subtype Letter_Tree is Letter_Trees.Binary_Search_Tree;
       
       type Package_Merge_Item is
@@ -565,7 +565,7 @@ package body Deflate.Huffman is
             declare
                Letters        : Letter_Tree;
             begin
-               Letters.Put(S, S);
+               Letters.Put(S, 1);
                I1 := (Weights(S), Letters);
                PM_Letters.Put(I1, 0);
             end;
@@ -583,26 +583,32 @@ package body Deflate.Huffman is
          for Package_Steps in 1 .. Packages loop
             declare
                Letters           : Letter_Tree;
+               L_Count           : Natural_64;
                Sum_Weight        : Natural_64 := 0;
-               Add_OK            : Boolean;
             begin
                I1.Letters.Find_First(L, OK);
                while OK loop
-                  Letters.Put(L, L);
-                  Sum_Weight := Sum_Weight + Weights(L);
+                  if Letters.Contains(L) then
+                     L_Count := Letters.Get(L) + 1;
+                  else
+                     L_Count := 1;
+                  end if;
+                  Letters.Put(L, L_Count);
                   I1.Letters.Find_Next(L, OK);
                end loop;
                I2.Letters.Find_First(L, OK);
                while OK loop
-                  Letters.Add(L, L, Add_OK);
-                  if Add_OK then
-                     Sum_Weight := Sum_Weight + Weights(L);
+                  if Letters.Contains(L) then
+                     L_Count := Letters.Get(L) + 1;
+                  else
+                     L_Count := 1;
                   end if;
+                  Letters.Put(L, L_Count);
                   I2.Letters.Find_Next(L, OK);
                end loop;
                
                PM_Package.Put(
-                    (Weight => Sum_Weight,
+                    (Weight => I1.Weight + I2.Weight,
                      Letters => Letters), 0);
                if Package_Steps < Packages then
                   I1 := PM_Merge.Next(I2);
@@ -636,11 +642,14 @@ package body Deflate.Huffman is
       for I in 1 .. 2*Alphabet_Size - 2 loop
          I1.Letters.Find_First(L, L_OK);
          while L_OK loop
-            Lengths(L) := Lengths(L) + 1;
+            Lengths(L) := Lengths(L) + Bit_Length(I1.Letters.Get(L));
             I1.Letters.Find_Next(L, L_OK);
          end loop;
          PM_Merge.Find_Next(I1, OK);
       end loop;
+      -- Put_Line("--- P-M algorithm results");
+      -- Print(Lengths);
+      -- Put_Line("--- P-M algorithm results complete");
       Build(Code, Lengths);
    end Build_Length_Limited;
 

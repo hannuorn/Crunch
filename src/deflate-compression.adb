@@ -60,30 +60,24 @@ package body Deflate.Compression is
 
       use type Dynamic_Bit_Array;
 
-      Deco              : Dynamic_Bit_Array;
-      C : Natural_64;
-      B : Byte;
+      -- Deco              : Dynamic_Bit_Array;
+      -- C : Natural_64;
+      -- B : Byte;
 
    begin
-      -- Demo_Huffman_Coding(Input);
-      -- Make_Single_Block_With_Fixed_Huffman(Input, Output);
-      -- Make_Single_Block_With_Optimal_Huffman(Input, Output);
       Deflate.Literals_Only_Huffman.Make_Single_Block(Input, Output);
-      C := 0;
-      Read_Byte(Output, C, B);
-      Put_Line("Eka tavu: " & Byte'Image(B));
-      Deflate.Literals_Only_Huffman.Decompress_Single_Block(Output, Deco);
-      Put_Line("Originaalin koko: " & Natural_64'Image(Input.Length));
-      Put_Line("Pakattu koko: " & Natural_64'Image(Output.Length));
-      Put_Line("Purettu koko: " & Natural_64'Image(Deco.Length));
-      if Input.Length = Deco.Length then
-         for I in Input.First .. Input.Last loop
-            if Input.Get(I) /= Deco.Get(I) then
-               Put_Line("Bitti poikittain: " & Natural_64'Image(I));
-            end if;
-         end loop;
-      end if;
-
+      
+      -- Deflate.Literals_Only_Huffman.Decompress_Single_Block(Output, Deco);
+      -- Put_Line("Originaalin koko: " & Natural_64'Image(Input.Length));
+      -- Put_Line("Pakattu koko: " & Natural_64'Image(Output.Length));
+      -- Put_Line("Purettu koko: " & Natural_64'Image(Deco.Length));
+      -- if Input.Length = Deco.Length then
+         -- for I in Input.First .. Input.Last loop
+            -- if Input.Get(I) /= Deco.Get(I) then
+               -- Put_Line("Bitti poikittain: " & Natural_64'Image(I));
+            -- end if;
+         -- end loop;
+      -- end if;
 
    end Compress;
 
