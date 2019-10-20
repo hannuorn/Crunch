@@ -25,6 +25,7 @@
 ------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Utility.Test; use Utility.Test;
 
 
 package body Utility.Binary_Search_Trees.Red_Black_Trees is
@@ -509,9 +510,10 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
          Y_Original_Color := Y.Color;
          X := Y.Right;
          if Y.P = Z then
-            if X /= null then
-               X.P := Y;
-            end if;
+            Assert(X.P = Y);
+            -- if X /= null then
+               -- X.P := Y;
+            -- end if;
          else
             C := Y.P;
             RB_Transplant(Root, Y, X);
@@ -519,8 +521,10 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
             Y.Right.P := Y;
             while C /= Y loop
                C.Count := C.Count - 1;
+               Assert(C.Count = 1 + Subtree_Size(C.Left) + Subtree_Size(C.Right));
                C := C.P;
             end loop;
+            Assert(Z.Count - 1 = 1 + Z.Left.Count + Y.Right.Count);
             Y.Count := Z.Count - 1;
          end if;
          RB_Transplant(Root, Z, Y);

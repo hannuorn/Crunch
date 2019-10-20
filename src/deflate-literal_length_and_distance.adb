@@ -117,7 +117,7 @@ package body Deflate.Literal_Length_and_Distance is
    type LLD_Code_Length is new Natural range 0 .. Max_LLD_Code_Length;
    type Code_Length_Letter is range 0 .. 18;
    package Code_Length_Huffman is new Deflate.Huffman
-     (Code_Length_Letter, 15);
+     (Code_Length_Letter, Max_CL_Code_Length);
 
 
    procedure Read_Block_Header
@@ -151,7 +151,6 @@ package body Deflate.Literal_Length_and_Distance is
       N := 0;
 
       Number_of_CL_Codewords := To_Number(HCLEN) + 4;
-      Put_Line("Number of CL codewords: " & Natural_64'Image(Number_of_CL_Codewords));
       while N < Number_of_CL_Codewords loop
          N := N + 1;
          Input.Read(C, B3);
@@ -180,49 +179,27 @@ package body Deflate.Literal_Length_and_Distance is
       end loop;
 
       CL_Code.Build(CL_Lengths);
-      Put_Line("CL_Lengths:");
-      Print(CL_Lengths);
 
-      Put_Line("Reading LL_Codes: " & Natural_64'Image(To_Number(HLIT) + 257));
-      Put_Line("Reading dist codes: " & Natural_64'Image(To_Number(HDIST) + 1));
-
-      Put_Line("LL last: " & Natural_64'Image(To_Number(HLIT) + 257 - 1));
       Assert(To_Number(HLIT) + 257 = 286);
-      Put_Line("Reading LL code lens...");
       for I in 0 .. To_Number(HLIT) + 257 - 1 loop
          CL_Code.Find(Input, C, Found, L);
-         -- Dummy interpretation of only 0 .. 15, repeat options not used
-         Put_Line("      I = " & Natural_64'Image(I) & ", len = " & Code_Length_Letter'Image(L));
-         if not Found then
-            Put_Line("Reading CL_Code lengths, I = " & Natural_64'Image(I) & ", found = false!!!!!!");
-         end if;
          Assert(Found);
-
+         -- Dummy interpretation of only 0 .. 15, repeat functions not used
+         -- Therefore L is typecasted to Huffman_Length
          LL_Lengths(Literal_Length_Letter(I)) := Literal_Length_Huffman.Huffman_Length(L);
---           Put_Line("LL code " & Literal_Length_Alphabet'Image(Literal_Length_Alphabet(I)) & " = " & Code_Length_Letter'Image(L));
       end loop;
-      Literal_Length_Code.Build(LL_Lengths);
-
-      Put_Line("Dist last: " & Natural_64'Image(To_Number(HDIST) + 1 - 1));
+      
       for I in 0 .. To_Number(HDIST) + 1 - 1 loop
          CL_Code.Find(Input, C, Found, L);
          Dist_Lengths(Distance_Letter(I)) := Distance_Huffman.Huffman_Length(L);
-
---           Put_Line("read dist code len " & Code_Length_Letter'Image(L));
       end loop;
       if To_Number(HDIST) + 1 = 1 and then L = 0 then
          Dist_Lengths := (others => 0);
       end if;
+      
+      Literal_Length_Code.Build(LL_Lengths);
       Distance_Code.Build(Dist_Lengths);
-
-
-      Put_Line("************************ CL_Code");
-      Code_Length_Huffman.Print(CL_Code);
-      Put_Line("************************ LL code");
-      Literal_Length_Huffman.Print(Literal_Length_Code);
-      Put_Line("************************ dist Code");
-      Distance_Huffman.Print(Distance_Code);
-
+      
    end Read_Block_Header;
 
 
@@ -245,7 +222,6 @@ package body Deflate.Literal_Length_and_Distance is
       CL_Code              : Code_Length_Huffman.Huffman_Code;
       CL_Codewords         : Code_Length_Huffman.Huffman_Codewords;
       CL_Lengths           : Code_Length_Huffman.Huffman_Lengths;
---      N                    : Natural_64;
       HLIT_Value           : Natural_64;
       HDIST_Value          : Natural_64;
       HCLEN_Value          : Natural_64;
@@ -274,6 +250,8 @@ package body Deflate.Literal_Length_and_Distance is
 
       -- 5 Bits: HLIT, # of Literal/Length codes - 257 (257 - 286)
       -- HLIT_Value := Literal_Length_Code.Number_of_Codewords;
+      
+      -- For now, we include all letters
       HLIT_Value := 286;
       Output.Add(To_Bits(HLIT_Value - 257, 5));
 
@@ -286,11 +264,14 @@ package body Deflate.Literal_Length_and_Distance is
       else
          HDIST_Value := Distance_Code.Number_of_Codewords;
       end if;
+      
+      -- For now, we include all letters
       HDIST_Value := 30;
       Output.Add(To_Bits(HDIST_Value - 1, 5));
 
       -- 4 Bits: HCLEN, # of Code Length codes - 4     (4 - 19)
       HCLEN_Value := CL_Code.Number_of_Codewords;
+      -- For now, we include all letters
       HCLEN_Value := 19;
 
       Output.Add(To_Bits(HCLEN_Value - 4, 4));
@@ -301,7 +282,6 @@ package body Deflate.Literal_Length_and_Distance is
 
       -- Codes 16, 17, 18 not in use => code lenghts 0
       Output.Add(To_Bits(0, 9));
-
       Output.Add(To_Bits(Natural_64(CL_Lengths(0)), 3));
       Output.Add(To_Bits(Natural_64(CL_Lengths(8)), 3));
       Output.Add(To_Bits(Natural_64(CL_Lengths(7)), 3));
@@ -322,20 +302,7 @@ package body Deflate.Literal_Length_and_Distance is
       -- HLIT + 257 code lengths for the literal/length alphabet,
       --    encoded using the code length Huffman code
 
---        N := 0;
---        for L in LL_Code_Lengths'Range loop
---           if LL_Code_Lengths(L) > 0 then
---              Output.Add(CL_Codewords(Code_Length_Letter(LL_Code_Lengths(L))));
---              N := N + 1;
---           end if;
---        end loop;
-      Put_Line("CL_Codewords for LL_Code: " & Natural'Image(
-               Literal_Length_Letter'Pos(Literal_Length_Letter'Last) -
-                 Literal_Length_Letter'Pos(Literal_Length_Letter'First) + 1));
-      Put_Line("LL first: " & Literal_Length_Letter'Image(Literal_Length_Letter'First));
-      Put_Line("LL last:  " & Literal_Length_Letter'Image(Literal_Length_Letter'Last));
       for L in Literal_Length_Letter loop
-         Put_Line("LL code " & Literal_Length_Letter'Image(L) & " = " & Literal_Length_Huffman.Huffman_Length'Image(LL_Code_Lengths(L)));
          Assert(not CL_Codewords(Code_Length_Letter(LL_Code_Lengths(L))).Is_Empty);
          Output.Add(CL_Codewords(Code_Length_Letter(LL_Code_Lengths(L))));
       end loop;
@@ -346,97 +313,10 @@ package body Deflate.Literal_Length_and_Distance is
       -- One distance code of zero bits means that there are no
       -- distance codes used at all (the data is all literals).
 
---        if Distance_Code.Number_of_Codewords = 0 then
---           Output.Add(CL_Codewords(0));
---        else
---           for L in Dist_Code_Lengths'Range loop
---              if Dist_Code_Lengths(L) > 0 then
---                 Output.Add(CL_Codewords(Code_Length_Letter(Dist_Code_Lengths(L))));
---              end if;
---           end loop;
---        end if;
-
-
-      Put_Line("CL_Codewords for Dist_Code: " & Natural'Image(
-               Distance_Letter'Pos(Distance_Letter'Last) -
-                 Distance_Letter'Pos(Distance_Letter'First) + 1));
-      Put_Line("Dist first: " & Distance_Letter'Image(Distance_Letter'First));
-      Put_Line("Dist last:  " & Distance_Letter'Image(Distance_Letter'Last));
       for L in Distance_Letter loop
-         Put_Line("write Dist code len " & Distance_Huffman.Huffman_Length'Image(Dist_Code_Lengths(L)));
          Output.Add(CL_Codewords(Code_Length_Letter(Dist_Code_Lengths(L))));
       end loop;
 
-      Put_Line("************************ CL_Code");
-      Code_Length_Huffman.Print(CL_Code);
-      Put_Line("************************ LL code");
-      Literal_Length_Huffman.Print(Literal_Length_Code);
-      Put_Line("************************ dist Code");
-      Distance_Huffman.Print(Distance_Code);
-
    end Write_Block_Header;
-
---        use Dynamic_Bit_Arrays;
---
---        LO_Code_Lengths   : Literals_Only_Huffman.Huffman_Lengths := Code.Get_Lengths;
---        Code_Len_Counts   : Code_Length_Huffman.Letter_Weights;
---        Len               : Literals_Only_Huffman.Limited_Bit_Length;
---        CLC               : Code_Length_Huffman.Huffman_Code;
---        CLC_Codewords     : Code_Length_Huffman.Huffman_Codewords;
---        CLC_Lengths       : Code_Length_Huffman.Huffman_Lengths
---                                (Literals_Only_Huffman.Limited_Bit_Length);
---
---     begin
---        -- Count code lengths
---        for B in LO_Code_Lengths'Range loop
---           Len := LO_Code_Lengths(B);
---           Code_Len_Counts(Len) := Code_Len_Counts(Len) + 1;
---        end loop;
---        -- 0 needs to be included in the alphabet
---        if Code_Len_Counts(0) = 0 then
---           Code_Len_Counts(0) := 1;
---        end if;
---
---        CLC.Build_Length_Limited
---          (Length_Max => 7, Weights => Code_Len_Counts);
---        CLC_Codewords := CLC.Get_Codewords;
---        CLC_Lengths := CLC.Get_Lengths;
---
---
---        -- HLIT = 0  (257)
---        Output.Add((1 .. 5 => 0));
---        -- HDIST = 0  (1)
---        Output.Add((1 .. 5 => 0));
---        -- HCLEN = 15  (19)
---        Output.Add((1 .. 4 => 1));
---        -- Code length 0 for 16, 17, 18
---        Output.Add((1 .. 3 * 3 => 0));
---        -- RFC defines the order: 16, 17, 18,
---        --    0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(0)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(8)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(7)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(9)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(6)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(10)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(5)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(11)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(4)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(12)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(3)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(13)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(2)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(14)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(1)));
---        Output.Add(CLC_Length_to_3_Bits(CLC_Lengths(15)));
---
---        for I in LO_Code_Lengths'Range loop
---           Output.Add(CLC_Codewords(LO_Code_Lengths(I)));
---        end loop;
---
---        -- One distance code of zero bits (means no distance codes used)
---        Output.Add(CLC_Codewords(0));
---     end Encode_Huffman_Code;
-
 
 end Deflate.Literal_Length_and_Distance;

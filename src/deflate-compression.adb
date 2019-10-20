@@ -7,7 +7,6 @@
 --
 ------------------------------------------------------------------------
 
-with Ada.Text_IO;             use Ada.Text_IO;
 with Utility.Bits_and_Bytes;
 with Utility.Test;
 with Deflate.Literal_Length_and_Distance;   
@@ -87,28 +86,11 @@ package body Deflate.Compression is
       
       -- write code trees, encoding LL_Code and Distance_Code
       Write_Block_Header(Output, LL_Code, Distance_Code);
-      Put_Line("Size after writing block header" & Natural_64'Image(Output.Length));
-      Put("Next bits: ");
       
       LLD_Array_to_Bit_Array(LLDs, LL_Code, Distance_Code, Output);
       
       EOB := LL_Codewords (End_of_Block);
-      Put_Line("EOB = " & Literal_Length_Huffman.To_String(EOB));
       Output.Add(EOB);
-         
---      Deflate.Literals_Only_Huffman.Make_Single_Block(Input, Output);
-      
-      -- Deflate.Literals_Only_Huffman.Decompress_Single_Block(Output, Deco);
-      -- Put_Line("Originaalin koko: " & Natural_64'Image(Input.Length));
-      -- Put_Line("Pakattu koko: " & Natural_64'Image(Output.Length));
-      -- Put_Line("Purettu koko: " & Natural_64'Image(Deco.Length));
-      -- if Input.Length = Deco.Length then
-         -- for I in Input.First .. Input.Last loop
-            -- if Input.Get(I) /= Deco.Get(I) then
-               -- Put_Line("Bitti poikittain: " & Natural_64'Image(I));
-            -- end if;
-         -- end loop;
-      -- end if;
 
    end Compress;
 

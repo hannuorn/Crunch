@@ -7,10 +7,30 @@
 --
 ------------------------------------------------------------------------
 
-with Ada.Text_IO;       use Ada.Text_IO;
-
-
 package body Deflate.LZ77 is
+
+   subtype Tribyte is Byte_Array (1 .. 3);
+   
+   -- List of locations where a tribyte can be found
+   
+   package Tribyte_Location_Trees is new Utility.Binary_Search_Trees
+      (Natural_64, Natural_64, "<", "=");
+      
+   subtype Tribyte_Location_Tree is Tribyte_Location_Trees.Binary_Search_Tree;
+   type Tribyte_Location_Tree_Access is access Tribyte_Location_Tree;
+      
+   -- Tree of tribytes, given a tribyte, gives list of locations for it
+
+   package Tribyte_Location_Tree_Controlled_Accesses is 
+         new Controlled_Accesses
+               (Tribyte_Location_Tree, Tribyte_Location_Tree_Access);
+   subtype Tribyte_Location_Tree_Controlled_Access is
+         Tribyte_Location_Tree_Controlled_Accesses.Controlled_Access;
+               
+   package Tribyte_Trees is new Utility.Binary_Search_Trees
+     (Tribyte, Tribyte_Location_Tree_Controlled_Access, "<", "=");
+   
+   subtype Tribyte_Tree is Tribyte_Trees.Binary_Search_Tree;
 
    
    function Match_Length
@@ -56,6 +76,9 @@ package body Deflate.LZ77 is
       loop
          exit when Input.Last - C < 2;
          
+         -- Debugging
+         Tritree.Verify;
+         
          -- Find matches
          Matches_Found := FALSE;
          Input.Get(C, Tri);
@@ -95,10 +118,7 @@ package body Deflate.LZ77 is
                  (Is_Literal  => FALSE,
                   Length      => Longest_Len,
                   Distance    => Deflate_Distance(C - Longest_Loc));
---                 Put_Line("Location: " & Natural_64'Image(C));
---                 Put_Line("Len-Dist: " & Deflate_Length'Image(Longest_Len) & " - " &
---                            Deflate_Distance'Image(Deflate_Distance(C - Longest_Loc)));
-               
+
                -- Add all tribytes within the skipped distance to the tree
                -- Remove stuff that the skipped distance renders obsolete
                
@@ -115,6 +135,9 @@ package body Deflate.LZ77 is
                      Loc_Tree := Create;
                      Loc := Access_to(Loc_Tree);
                      Loc.Put(I, I);
+                     Tritree.Verify;
+                     Tritree.Put(Tri, Loc_Tree);
+                     Tritree.Verify;
                   end if;
                   
                   -- Remove obsoletes
@@ -129,6 +152,11 @@ package body Deflate.LZ77 is
                            Loc.Remove(L);
                            Loc.Find_First(L, Found);
                         end loop;
+                        if Loc.Is_Empty then
+                           Tritree.Verify;
+                           Tritree.Remove(Tri);
+                           Tritree.Verify;
+                        end if;
                      end if;
                   end if;
                   
@@ -139,7 +167,9 @@ package body Deflate.LZ77 is
             Loc_Tree := Create;
             Loc := Access_to(Loc_Tree);
             Loc.Put(C, C);
+            Tritree.Verify;
             Tritree.Put(Tri, Loc_Tree);
+            Tritree.Verify;
          end if;
          if not Matches_Found then
             -- No matches found. Output literal.
@@ -159,6 +189,11 @@ package body Deflate.LZ77 is
                      Loc.Remove(L);
                      Loc.Find_First(L, Found);
                   end loop;
+                  if Loc.Is_Empty then
+                     Tritree.Verify;
+                     Tritree.Remove(Tri);
+                     Tritree.Verify;
+                  end if;
                end if;
             end if;
          end if;
@@ -253,37 +288,19 @@ package body Deflate.LZ77 is
       Length_L          : Length_Letter;
       Distance_L        : Distance_Letter;
       Extra_Bits        : Dynamic_Bit_Array;
---        N                 : Natural := 0;
       
    begin
       for I in LLDs.First .. LLDs.Last loop
          LLD := LLDs.Get(I);
          if LLD.Is_Literal then
             Output.Add(LL_CWs(Literal_Length_Letter(LLD.Literal)));
---              if N < 50 then
---                 Put_Line(Literal_Length_Huffman.To_String(LL_CWs(Literal_Length_Letter(LLD.Literal))));
---                 N := N + 1;
---              end if;
---              Put_Line("Literal: " & Byte'Image(LLD.Literal) & " = " & Character'Image(Character'Val(LLD.Literal)));
          else
             Length_Value_to_Code(LLD.Length, Length_L, Extra_Bits);
             Output.Add(LL_CWs(Length_L));
             Output.Add(Extra_Bits);
---              if N < 50 then
---                 Put_Line("Len code: " & Literal_Length_Huffman.To_String(LL_CWs(Length_L)));
---                 Put_Line("Len extra bits: " & Literal_Length_Huffman.To_String(Extra_Bits));
---              end if;
             Distance_Value_to_Code(LLD.Distance, Distance_L, Extra_Bits);
             Output.Add(Distance_CWs(Distance_L));
             Output.Add(Extra_Bits);
---              if N < 50 then
---                 Put_Line("Dist code: " & Distance_Huffman.To_String(Distance_CWs(Distance_L)));
---                 Put_Line("Dist extra bits: " & Distance_Huffman.To_String(Extra_Bits));
---                 N := N + 1;
---              end if;
-            
---              Put_Line("Length-Distance: " & Deflate_Length'Image(LLD.Length) &
---                         " - " & Deflate_Distance'Image(LLD.Distance));
          end if;
       end loop;
    end LLD_Array_to_Bit_Array;

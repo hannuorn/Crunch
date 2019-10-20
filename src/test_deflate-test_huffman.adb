@@ -31,6 +31,7 @@ package body Test_Deflate.Test_Huffman is
 
    begin
       Begin_Test("Test_Case_1");
+      
       Weights :=
         (0  => 21,
          1  => 2,
@@ -53,7 +54,6 @@ package body Test_Deflate.Test_Huffman is
       CL.Build_Length_Limited(7, Weights);
       CL_Codewords := CL.Get_Codewords;
       if CL_Codewords(10).Get_Array = (1 => 0) then
-         Print("Codeword for letter 10 is 0. All other codewords must start with 1.");
          for I in Deflate_Bit_Len'Range loop
             declare
                Bits     : Bit_Array := CL_Codewords(I).Get_Array;
@@ -68,8 +68,6 @@ package body Test_Deflate.Test_Huffman is
             end;
          end loop;
       end if;
-      
-      CL.Print;
       
       End_Test;
    end Test_Case_1;

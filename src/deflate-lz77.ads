@@ -14,30 +14,8 @@ with Utility.Controlled_Accesses;
 with Deflate.Literal_Length_and_Distance;
 use  Deflate.Literal_Length_and_Distance;
 
+
 package Deflate.LZ77 is
-
-   subtype Tribyte is Byte_Array (1 .. 3);
-   
-   -- List of locations where a tribyte can be found
-   
-   package Tribyte_Location_Trees is new Utility.Binary_Search_Trees
-      (Natural_64, Natural_64, "<", "=");
-      
-   subtype Tribyte_Location_Tree is Tribyte_Location_Trees.Binary_Search_Tree;
-   type Tribyte_Location_Tree_Access is access Tribyte_Location_Tree;
-      
-   -- Tree of tribytes, given a tribyte, gives list of locations for it
-
-   package Tribyte_Location_Tree_Controlled_Accesses is 
-         new Controlled_Accesses
-               (Tribyte_Location_Tree, Tribyte_Location_Tree_Access);
-   subtype Tribyte_Location_Tree_Controlled_Access is
-         Tribyte_Location_Tree_Controlled_Accesses.Controlled_Access;
-               
-   package Tribyte_Trees is new Utility.Binary_Search_Trees
-     (Tribyte, Tribyte_Location_Tree_Controlled_Access, "<", "=");
-   
-   subtype Tribyte_Tree is Tribyte_Trees.Binary_Search_Tree;
 
    type Literal_Length_Distance (Is_Literal : Boolean := TRUE) is
       record
@@ -79,5 +57,5 @@ package Deflate.LZ77 is
       LL_Code           : in     Literal_Length_Huffman.Huffman_Code;
       Distance_Code     : in     Distance_Huffman.Huffman_Code;
       Output            : in out Dynamic_Bit_Array);
-   
+
 end Deflate.LZ77;

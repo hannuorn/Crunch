@@ -22,6 +22,8 @@
 --    * Wikipedia: Huffman coding
 --    * Sayood, Khalid (2012), Introduction to data compression,
 --      Morgan Kaufmann, 4th ed.
+--    * Turpin, A. and Moffat, A. (1994), 
+--      Practical Length-Limited Coding for Large Alphabets
 --
 ------------------------------------------------------------------------
 
@@ -134,7 +136,7 @@ package body Deflate.Huffman is
       Stream            : in     Dynamic_Bit_Array;
       Counter           : in out Natural_64;
       Found             : out    Boolean;
-      L                 : out    Letter) is
+      L                 : out    Letter_Type) is
       
       
       Node              : Huffman_Tree_Node_Access;
@@ -142,7 +144,7 @@ package body Deflate.Huffman is
       
    begin
       Found := FALSE;
-      L := Letter'First;
+      L := Letter_Type'First;
       Node := Code.Tree;
       I := Counter;
       loop
@@ -161,43 +163,10 @@ package body Deflate.Huffman is
       end if;
    end Find;
 
-
---     function To_Huffman_Codeword
---       (N                 : in     Natural_64;
---        Length            : in     Bit_Length)
---                            return Huffman_Codeword is
---  
---        X                 : Natural_64;
---        Bits              : Bit_Array(0 .. Natural_64(Limited_Bit_Length'Last));
---        I                 : Bit_Length;
---        C                 : Huffman_Codeword;
---        B                 : Bit;
---        
---     begin
---        X := N;
---        I := 0;
---        while X > 0 and I < Limited_Bit_Length'Last loop
---           B := Bit(X mod 2);
---           Bits(Natural_64(I)) := B;
---           X := X / 2;
---           I := I + 1;
---        end loop;
---        -- I is now number of bits written to Bits
---        -- First add leading zeros: (Length - I) zeros
---        -- Then add the bits in reverse order
---        for J in 1 .. Length - I loop
---           C.Add(0);
---        end loop;
---        for K in 1 .. I loop
---           C.Add(Bits(Natural_64(I) - Natural_64(K)));
---        end loop;
---        return C;
---     end To_Huffman_Codeword;
-   
    
    procedure Add_to_Tree
      (Tree              : in out Huffman_Tree_Node_Access;
-      L                 : in     Letter;
+      L                 : in     Letter_Type;
       Codeword          : in     Huffman_Codeword) is
       
       C                 : Bit_Array := Codeword.Get_Array;
@@ -286,14 +255,13 @@ package body Deflate.Huffman is
                
          Next_Code(Bits) := Number_Code;
          
-         if Next_Code(Bits) >= 2**Natural(Bits) then
-            Put_Line("WARNING");
-            Put_Line("for BL" & Huffman_Length'Image(Bits) & ", Next_Code = " &
-                  Natural_64'Image(Next_Code(Bits)) & " which is too long!");
-         end if;
-         Put_Line("Bits = " & Huffman_Length'Image(Bits) & ", next-Code = " & Natural_64'Image(Number_Code));
+         -- if Next_Code(Bits) >= 2**Natural(Bits) then
+            -- Put_Line("WARNING");
+            -- Put_Line("for BL" & Huffman_Length'Image(Bits) & ", Next_Code = " &
+                  -- Natural_64'Image(Next_Code(Bits)) & " which is too long!");
+         -- end if;
+         
          Previous_Count := BL_Count(Bits);
-         Put_Line("BL_Count = " & Natural_64'Image(BL_Count(Bits)));
       end loop;
       
       -- Debugging
@@ -383,7 +351,7 @@ package body Deflate.Huffman is
    --
    -- Implementation Notes:
    --    This procedure builds an optimal Huffman code
-   --    given the weight of each letter.
+   --    given the weight of each Letter_Type.
    --
    --    Refer to Wikipedia: Huffman coding, chapter 'Basic technique'.
    ---------------------------------------------------------------------
@@ -397,7 +365,7 @@ package body Deflate.Huffman is
       type Huffman_Build_Key is
          record
             Weight         : Natural_64;
-            First_L        : Letter;
+            First_L        : Letter_Type;
          end record;
       
       -- The list is sorted by weight.
@@ -448,7 +416,7 @@ package body Deflate.Huffman is
          N := new Huffman_Tree_Node;
          N.all :=
               (Is_Leaf  => FALSE,
-               L        => Letter'First,
+               L        => Letter_Type'First,
                Edge_0   => Node_0,
                Edge_1   => Node_1);
          List.Put
@@ -485,7 +453,12 @@ package body Deflate.Huffman is
       Weights           : in     Letter_Weights) is
       
       package Letter_Trees is new Utility.Binary_Search_Trees
-            (Letter, Natural_64, "<", "="); use Letter_Trees;
+        (Key_Type       => Letter_Type,
+         ELement_Type   => Natural_64,
+         "<"            => "<",
+         "="            => "=");
+         
+      use Letter_Trees;
       subtype Letter_Tree is Letter_Trees.Binary_Search_Tree;
       
       type Package_Merge_Item is
@@ -520,9 +493,15 @@ package body Deflate.Huffman is
          return Left.Letters = Right.Letters;
       end Letters_Equal;
       
+      type Dummy_Type is range 0 .. 0;
+      Dummy_Constant    : constant Dummy_Type := 0;
 
       package Package_Merge_Trees is new Utility.Binary_Search_Trees
-            (Package_Merge_Item, Natural, "<", Letters_Equal);
+        (Key_Type       => Package_Merge_Item,
+         Element_Type   => Dummy_Type,
+         "<"            => "<",
+         "="            => Letters_Equal);
+         
       subtype Package_Merge_Tree is Package_Merge_Trees.Binary_Search_Tree;
       
       
@@ -531,7 +510,7 @@ package body Deflate.Huffman is
       procedure Print
         (Item              : in     Package_Merge_Item) is
       
-         L                 : Letter;
+         L                 : Letter_Type;
          OK                : Boolean;
          
       begin
@@ -539,7 +518,7 @@ package body Deflate.Huffman is
          Put("   Letters: ");
          Item.Letters.Find_First(L, OK);
          while OK loop
-            Put(Letter'Image(L));
+            Put(Letter_Type'Image(L));
             Item.Letters.Find_Next(L, OK);
             if OK then
                Put(",");
@@ -573,7 +552,7 @@ package body Deflate.Huffman is
       PM_Merge             : Package_Merge_Tree;
       I1, I2               : Package_Merge_Item;
       OK, L_OK             : Boolean;
-      L                    : Letter;
+      L                    : Letter_Type;
       I                    : Natural_64;
       Packages             : Natural_64;
       Alphabet_Size        : Natural_64 := 0;
@@ -589,7 +568,7 @@ package body Deflate.Huffman is
             begin
                Letters.Put(S, 1);
                I1 := (Weights(S), Letters);
-               PM_Letters.Put(I1, 0);
+               PM_Letters.Put(I1, Dummy_Constant);
             end;
          end if;
       end loop;
@@ -639,22 +618,17 @@ package body Deflate.Huffman is
          PM_Merge.Clear;
          PM_Package.Find_First(I1, OK);
          while OK loop
-            PM_Merge.Put(I1, 0);
+            PM_Merge.Put(I1, Dummy_Constant);
             PM_Package.Find_Next(I1, OK);
          end loop;
          PM_Letters.Find_First(I1, OK);
          while OK loop
-            PM_Merge.Put(I1, 0);
+            PM_Merge.Put(I1, Dummy_Constant);
             PM_Letters.Find_Next(I1, OK);
          end loop;
       end loop;
 
-      -- Debugging
-      -- Put_Line("Symbols in use: " & Natural_64'Image(Alphabet_Size));
-      -- Put_Line("Using " & Natural_64'Image(2*Alphabet_Size - 2) & " PM items");
-      --
-      
-      -- Count number of items containing each letter
+      -- Count number of items containing each Letter_Type
       I := 0;
       PM_Merge.Find_First(I1, OK);
       for I in 1 .. 2*Alphabet_Size - 2 loop
@@ -665,12 +639,11 @@ package body Deflate.Huffman is
          end loop;
          PM_Merge.Find_Next(I1, OK);
       end loop;
-      Put_Line("--- P-M algorithm results");
-      Print(Lengths);
-      Put_Line("--- P-M algorithm results complete");
+
       Build(Code, Lengths);
       Code.Has_Weights := TRUE;
       Code.Weights := Weights;
+      
    end Build_Length_Limited;
 
 
@@ -678,10 +651,10 @@ package body Deflate.Huffman is
      (Lengths           : in     Huffman_Lengths) is
 
    begin
-      Put_Line("Letter : code length");
+      Put_Line("Letter_Type : code length");
       for I in Lengths'Range loop
          if Lengths(I) > 0 then
-            Put_Line(Letter'Image(I) & " : " & Huffman_Length'Image(Lengths(I)));
+            Put_Line(Letter_Type'Image(I) & " : " & Huffman_Length'Image(Lengths(I)));
          end if;
       end loop;
       Put_Line("");
@@ -695,7 +668,7 @@ package body Deflate.Huffman is
       Put_Line("");
       Put_Line("Huffman_Codewords. Size is" & Integer'Image(Codewords'Length));
       for L in Codewords'Range loop
-         Put_Line("      " & Letter'Image(L) & " = " & To_String(Codewords(L)));
+         Put_Line("      " & Letter_Type'Image(L) & " = " & To_String(Codewords(L)));
       end loop;
       Put_Line("End of Huffman_Codewords.");
       Put_Line("");
@@ -707,7 +680,7 @@ package body Deflate.Huffman is
 
       type Symbol_Info is 
          record
-            L                 : Letter;
+            L                 : Letter_Type;
             Weight            : Natural_64;
             Code              : Huffman_Codeword;
          end record;
@@ -756,7 +729,7 @@ package body Deflate.Huffman is
       Put_Line("Huffman printout");
       Put_Line("");
       Put_Line("Alphabet size:" & Natural'Image(
-            Letter'Pos(Letter'Last) - Letter'Pos(Letter'First) + 1));
+            Letter_Type'Pos(Letter_Type'Last) - Letter_Type'Pos(Letter_Type'First) + 1));
             
       if Code.Has_Weights then
          Put_Line("This tree was built from Weights.");
@@ -788,12 +761,12 @@ package body Deflate.Huffman is
       for N in 1 .. 10 loop
          exit when not OK;
          if Code.Has_Weights then
-            Put_Line("Letter " & Letter'Image(Info.L) & 
+            Put_Line("Letter_Type " & Letter_Type'Image(Info.L) & 
                   ": Weight" & Natural_64'Image(Info.Weight) &
                   ", code length =" & Natural_64'Image(Info.Code.Length) & 
                   ", code = " & To_String(Info.Code));
          else
-            Put_Line("Letter '" & Letter'Image(Info.L) &
+            Put_Line("Letter_Type '" & Letter_Type'Image(Info.L) &
                   "', code length =" & Natural_64'Image(Info.Code.Length) &
                   ", code = " & To_String(Info.Code));
          end if;
@@ -806,12 +779,12 @@ package body Deflate.Huffman is
       for N in 1 .. 10 loop
          exit when not OK;
          if Code.Has_Weights then
-            Put_Line("Letter " & Letter'Image(Info.L) & 
+            Put_Line("Letter_Type " & Letter_Type'Image(Info.L) & 
                   ": Weight" & Natural_64'Image(Info.Weight) &
                   ", code length =" & Natural_64'Image(Info.Code.Length) & 
                   ", code = " & To_String(Info.Code));
          else
-            Put_Line("Letter " & Letter'Image(Info.L) &
+            Put_Line("Letter_Type " & Letter_Type'Image(Info.L) &
                   ", code length =" & Natural_64'Image(Info.Code.Length) &
                   ", code = " & To_String(Info.Code));
          end if;

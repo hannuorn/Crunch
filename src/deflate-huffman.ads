@@ -24,21 +24,21 @@ with Utility.Bits_and_Bytes;     use Utility.Bits_and_Bytes;
 
 generic
 
-   type Letter is (<>);
+   type Letter_Type is (<>);
    Max_Bit_Length       : Natural := 32;
    
    
 package Deflate.Huffman is
 
    subtype Huffman_Codeword is Dynamic_Bit_Array;
-   type Huffman_Codewords is array (Letter) of Huffman_Codeword;
+   type Huffman_Codewords is array (Letter_Type) of Huffman_Codeword;
 
    type Huffman_Length is new Natural range 0 .. Max_Bit_Length;
-   type Huffman_Lengths is array (Letter) of Huffman_Length
+   type Huffman_Lengths is array (Letter_Type) of Huffman_Length
       with Default_Component_Value => 0;
    
-   type Huffman_Naturals is array (Letter range <>) of Natural_64;
-   type Letter_Weights is array (Letter) of Natural_64
+   type Huffman_Naturals is array (Letter_Type range <>) of Natural_64;
+   type Letter_Weights is array (Letter_Type) of Natural_64
       with Default_Component_Value => 0;
 
    type Huffman_Code is tagged private;
@@ -55,7 +55,7 @@ package Deflate.Huffman is
    --
    -- Purpose:
    --    This procedure builds an optimal Huffman code
-   --    given the frequency of each letter.
+   --    given the frequency of each Letter_Type.
    ------------------------------------------------------------------------
    procedure Build
      (Code              : out    Huffman_Code;
@@ -105,7 +105,7 @@ package Deflate.Huffman is
       Stream            : in     Dynamic_Bit_Array;
       Counter           : in out Natural_64;
       Found             : out    Boolean;
-      L                 : out    Letter);
+      L                 : out    Letter_Type);
       
  
    function Get_Lengths
@@ -133,7 +133,7 @@ private
    type Huffman_Tree_Node is
       record
          Is_Leaf           : Boolean;
-         L                 : Letter;
+         L                 : Letter_Type;
          Edge_0            : Huffman_Tree_Node_Access;
          Edge_1            : Huffman_Tree_Node_Access;
       end record;

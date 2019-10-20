@@ -33,11 +33,13 @@ package Deflate.Literal_Length_and_Distance is
 
    type Distance_Letter is range 0 .. 29;
 
-   package Literal_Length_Huffman is
-     new Deflate.Huffman (Literal_Length_Alphabet);
+   package Literal_Length_Huffman is new Deflate.Huffman
+     (Letter_Type    => Literal_Length_Alphabet,
+      Max_Bit_Length => 15);
 
-   package Distance_Huffman is
-     new Deflate.Huffman (Distance_Letter);
+   package Distance_Huffman is new Deflate.Huffman
+     (Letter_Type    => Distance_Letter,
+      Max_Bit_Length => 15);
 
 
    procedure Length_Value_to_Code
@@ -109,38 +111,6 @@ package Deflate.Literal_Length_and_Distance is
       283 => 195,
       284 => 227,
       285 => 258);
-
---     Length_Value_to_Letter  : constant array (Deflate_Length) of Length_Letter :=
---
---       (        3   => 257,
---                4   => 258,
---                5   => 259,
---                6   => 260,
---                7   => 261,
---                8   => 262,
---                9   => 263,
---               10   => 264,
---         11 .. 12   => 265,
---         13 .. 14   => 266,
---         15 .. 16   => 267,
---         17 .. 18   => 268,
---         19 .. 22   => 269,
---         23 .. 26   => 270,
---         27 .. 30   => 271,
---         31 .. 34   => 272,
---         35 .. 42   => 273,
---         43 .. 50   => 274,
---         51 .. 58   => 275,
---         59 .. 66   => 276,
---         67 .. 82   => 277,
---         83 .. 98   => 278,
---         99 .. 114  => 279,
---        115 .. 130  => 280,
---        131 .. 162  => 281,
---        163 .. 194  => 282,
---        195 .. 226  => 283,
---        227 .. 257  => 284,
---        258         => 285);
 
    Distance_Extra_Bits     : constant
      Distance_Huffman.Huffman_Naturals (0 .. 29) :=

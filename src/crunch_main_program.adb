@@ -161,8 +161,6 @@ package body Crunch_Main_Program is
    
    procedure Crunch_Run is
    
-      package Flo_IO is new Ada.Text_IO.Float_IO (Float);
-      
       Bytes             : Dynamic_Byte_Array;
       Bits              : Dynamic_Bit_Array;
       Before            : Time;
@@ -179,23 +177,45 @@ package body Crunch_Main_Program is
             Before := Clock;
             Read_File_as_Bytes(Argument(2), Bytes);
             After := Clock;
-            F := Float(Bytes.Length)/1024.0/1024.0/Float(After - Before);
-            Put_Line("Size: " & Natural_64'Image(Bytes.Length) & " bytes");
-            --Put_Line("Reading time: " & Duration'Image(After - Before) & " seconds");
-            Put("Speed: ");
-            Ada.Float_Text_IO.Put(Item => F, Fore => 3, Aft => 1, Exp => 0);
+            
+            F := Float(Bytes.Length) / 1024.0**2;
+            Put("Size:  ");
+            Ada.Float_Text_IO.Put(F, Fore => 1, Aft => 2, Exp => 0);
+            Put_Line(" MB");
+            
+            F := Float(Bytes.Length) / 1024.0**2 / Float(After - Before);
+            Put("Reading speed: ");
+            Ada.Float_Text_IO.Put(Item => F, Fore => 1, Aft => 2, Exp => 0);
             Put_Line(" MB/s");
---            Put_Line("Speed: " & Float'Image(F) & " MB/s ");
+            
             Put_Line("");
             Put_Line("Compressing...");
+            
             Before := Clock;
             Compress(Bytes, Bits);
             After := Clock;
-            F := Float(Bytes.Length)/8.0/1024.0/1024.0/Float(After - Before);
-            Put_Line("Compression speed: ");
-            Ada.Float_Text_IO.Put(Item => F, Fore => 3, Aft => 1, Exp => 0);
+            
+            F := Float(Bytes.Length) / Float(1024**2) / Float(After - Before);
+            Put("Compressing speed: ");
+            Ada.Float_Text_IO.Put(Item => F, Fore => 3, Aft => 2, Exp => 0);
             Put_Line(" MB/s");
-            Put_Line("Writing _crunch...");
+            
+            F := Float(Bits.Length) / 8.0 / 1024.0**2;
+            Put("Compressed vs. original size:  ");
+            Ada.Float_Text_IO.Put(Item => F, Fore => 1, Aft => 2, Exp => 0);
+            Put(" MB  /  ");
+            F := Float(Bytes.Length) / 1024.0**2;
+            Ada.Float_Text_IO.Put(Item => F, Fore => 1, Aft => 2, Exp => 0);
+            Put_Line("  MB");
+            
+            F := Float(Bits.Length/8) / Float(Bytes.Length) * 100.0;
+            Put("Compression ratio: ");
+            Ada.Float_Text_IO.Put(F, Fore => 3, Aft => 1, Exp => 0);
+            Put_Line(" %");
+            
+            Put_Line("");
+            
+            Put_Line("Writing _crunch file...");
             Write_File(Argument(2) & "_crunch", Bits);
          elsif Argument(1) = "-d" then
             Put_Line("Decompressing " & Argument(2) & "...");
