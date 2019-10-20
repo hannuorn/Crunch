@@ -503,12 +503,14 @@ package body Deflate.Huffman is
             if Left.Letters.Size = Right.Letters.Size then
                return Left.Letters < Right.Letters;
             else
-               return Left.Letters.Size < Right.Letters.Size;
+               -- We want packages before single letters of equal weight
+               return Left.Letters.Size > Right.Letters.Size;
             end if;
          else
             return Left.Weight < Right.Weight;
          end if;
       end "<";
+
 
       function Letters_Equal
         (Left, Right          : in     Package_Merge_Item)
@@ -517,6 +519,7 @@ package body Deflate.Huffman is
       begin
          return Left.Letters = Right.Letters;
       end Letters_Equal;
+      
 
       package Package_Merge_Trees is new Utility.Binary_Search_Trees
             (Package_Merge_Item, Natural, "<", Letters_Equal);
@@ -607,20 +610,16 @@ package body Deflate.Huffman is
             begin
                I1.Letters.Find_First(L, OK);
                while OK loop
-                  if Letters.Contains(L) then
-                     L_Count := Letters.Get(L) + 1;
-                  else
-                     L_Count := 1;
-                  end if;
+                  L_Count := I1.Letters.Get(L);
                   Letters.Put(L, L_Count);
                   I1.Letters.Find_Next(L, OK);
                end loop;
                I2.Letters.Find_First(L, OK);
                while OK loop
                   if Letters.Contains(L) then
-                     L_Count := Letters.Get(L) + 1;
+                     L_Count := Letters.Get(L) + I2.Letters.Get(L);
                   else
-                     L_Count := 1;
+                     L_Count := I2.Letters.Get(L);
                   end if;
                   Letters.Put(L, L_Count);
                   I2.Letters.Find_Next(L, OK);
