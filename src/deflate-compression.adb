@@ -14,7 +14,7 @@ with Deflate.Literal_Length_and_Distance;
 use  Deflate.Literal_Length_and_Distance;   
 with Deflate.Huffman;
 with Deflate.Literals_Only_Huffman;
-with Deflate.LZ77;
+with Deflate.LZ77;            use Deflate.LZ77;
 
 
 package body Deflate.Compression is
@@ -57,7 +57,7 @@ package body Deflate.Compression is
 
 
    procedure Compress
-     (Input             : in     Dynamic_Bit_Array;
+     (Input             : in     Dynamic_Byte_Array;
       Output            : out    Dynamic_Bit_Array) is
 
       use type Dynamic_Bit_Array;
@@ -65,9 +65,38 @@ package body Deflate.Compression is
       -- Deco              : Dynamic_Bit_Array;
       -- C : Natural_64;
       -- B : Byte;
+      LLDs              : Dynamic_LLD_Array;
+      LL_Weights        : Literal_Length_Huffman.Letter_Weights;
+      Distance_Weights  : Distance_Huffman.Letter_Weights;
+      LL_Code           : Literal_Length_Huffman.Huffman_Code;
+      LL_Codewords      : Literal_Length_Huffman.Huffman_Codewords;
+      Distance_Code     : Distance_Huffman.Huffman_Code;
+      EOB               : Literal_Length_Huffman.Huffman_Codeword;
 
    begin
-      Deflate.Literals_Only_Huffman.Make_Single_Block(Input, Output);
+      LZ77.Compress(Input, LLDs);
+      LZ77.Count_Weights(LLDs, LL_Weights, Distance_Weights);
+      LL_Code.Build_Length_Limited(15, LL_Weights);
+      LL_Codewords := LL_Code.Get_Codewords;
+      Distance_Code.Build_Length_Limited(15, Distance_Weights);
+      
+      -- write block header
+      
+      Output.Add((1 => BFINAL_1));
+      Output.Add(BTYPE_Dynamic_Huffman);
+      
+      -- write code trees, encoding LL_Code and Distance_Code
+      Write_Block_Header(Output, LL_Code, Distance_Code);
+      Put_Line("Size after writing block header" & Natural_64'Image(Output.Length));
+      Put("Next bits: ");
+      
+      LLD_Array_to_Bit_Array(LLDs, LL_Code, Distance_Code, Output);
+      
+      EOB := LL_Codewords (End_of_Block);
+      Put_Line("EOB = " & Literal_Length_Huffman.To_String(EOB));
+      Output.Add(EOB);
+         
+--      Deflate.Literals_Only_Huffman.Make_Single_Block(Input, Output);
       
       -- Deflate.Literals_Only_Huffman.Decompress_Single_Block(Output, Deco);
       -- Put_Line("Originaalin koko: " & Natural_64'Image(Input.Length));

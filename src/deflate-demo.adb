@@ -27,7 +27,7 @@ package body Deflate.Demo is
       Weights           : Letter_Weights;
       HC                : Huffman_Code;
       HT2               : Huffman_Code;
-      Lens              : Huffman_Lengths(Character'Range);
+      Lens              : Huffman_Lengths;
       
    begin
       Put_Line("Message = """ & Message & """");
@@ -52,7 +52,7 @@ package body Deflate.Demo is
       Put_Line("Lengths:");
       for L in Lens'Range loop
          if Lens(L) > 0 then
-            Put_Line(L & " has length " & Bit_Length'Image(Lens(L)));
+            Put_Line(L & " has length " & Huffman_Length'Image(Lens(L)));
          end if;
       end loop;
       HT2.Build(Lens);
@@ -169,9 +169,9 @@ package body Deflate.Demo is
       HC                : Byte_Huffman.Huffman_Code;
       Weight            : Byte_Huffman.Letter_Weights;
       Char_Wt           : Character_Huffman.Letter_Weights;
-      Char_Lengths      : Character_Huffman.Huffman_Lengths(Character);
+      Char_Lengths      : Character_Huffman.Huffman_Lengths;
       Char_HC           : Character_Huffman.Huffman_Code;
-      Lengths           : Byte_Huffman.Huffman_Lengths(Byte);
+      Lengths           : Byte_Huffman.Huffman_Lengths;
    
    begin
       Char_Wt('A') := 5;

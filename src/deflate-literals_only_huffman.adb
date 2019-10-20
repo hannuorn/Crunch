@@ -6,7 +6,7 @@ with Utility.Test;      use Utility.Test;
 package body Deflate.Literals_Only_Huffman is
 
    package Code_Length_Huffman is
-         new Deflate.Huffman(Literals_Only_Huffman.Limited_Bit_Length, 7);
+         new Deflate.Huffman(Literals_Only_Huffman.Huffman_Length, 7);
 
 
 
@@ -36,12 +36,12 @@ package body Deflate.Literals_Only_Huffman is
       subtype Bits_3 is Bit_Array(1 .. 3);
 
       function CLC_Length_to_3_Bits
-        (Length         : in     Code_Length_Huffman.Limited_Bit_Length)
+        (Length         : in     Code_Length_Huffman.Huffman_Length)
                           return Bits_3 is
 
-         use type Code_Length_Huffman.Bit_Length;
+         use type Code_Length_Huffman.Huffman_Length;
 
-         Len            : Code_Length_Huffman.Limited_Bit_Length := Length;
+         Len            : Code_Length_Huffman.Huffman_Length := Length;
          Res            : Bits_3;
 
       begin
@@ -57,11 +57,10 @@ package body Deflate.Literals_Only_Huffman is
 
       LO_Code_Lengths   : Literals_Only_Huffman.Huffman_Lengths := Code.Get_Lengths;
       Code_Len_Counts   : Code_Length_Huffman.Letter_Weights;
-      Len               : Literals_Only_Huffman.Limited_Bit_Length;
+      Len               : Literals_Only_Huffman.Huffman_Length;
       CLC               : Code_Length_Huffman.Huffman_Code;
       CLC_Codewords     : Code_Length_Huffman.Huffman_Codewords;
-      CLC_Lengths       : Code_Length_Huffman.Huffman_Lengths
-                              (Literals_Only_Huffman.Limited_Bit_Length);
+      CLC_Lengths       : Code_Length_Huffman.Huffman_Lengths;
 
    begin
       -- Count code lengths
@@ -162,14 +161,14 @@ package body Deflate.Literals_Only_Huffman is
 
       function Bits_3_to_CLC_Length
         (B3                : in     Bits_3)
-         return Code_Length_Huffman.Limited_Bit_Length is
+         return Code_Length_Huffman.Huffman_Length is
 
          use Code_Length_Huffman;
       begin
          return
-               4 * Bit_Length(B3 (1)) +
-               2 * Bit_Length(B3 (2)) +
-               1 * Bit_Length(B3 (3));
+               4 * Huffman_Length(B3 (1)) +
+               2 * Huffman_Length(B3 (2)) +
+               1 * Huffman_Length(B3 (3));
       end Bits_3_to_CLC_Length;
 
       use Literals_Only_Huffman;
@@ -180,12 +179,11 @@ package body Deflate.Literals_Only_Huffman is
       B3                : Bits_3;
       B4                : Bit_Array (1 .. 4);
       B5                : Bit_Array (1 .. 5);
-      CLC_Lengths       : Code_Length_Huffman.Huffman_Lengths
-                              (Literals_Only_Huffman.Limited_Bit_Length);
+      CLC_Lengths       : Code_Length_Huffman.Huffman_Lengths;
       CLC               : Code_Length_Huffman.Huffman_Code;
       Found             : Boolean;
-      L                 : Literals_Only_Huffman.Limited_Bit_Length;
-      Lengths           : Literals_Only_Huffman.Huffman_Lengths(Literals_Only_Alphabet);
+      L                 : Literals_Only_Huffman.Huffman_Length;
+      Lengths           : Literals_Only_Huffman.Huffman_Lengths;
       HC                : Literals_Only_Huffman.Huffman_Code;
       LO                : Literals_Only_Alphabet;
       X                 : Natural_64;

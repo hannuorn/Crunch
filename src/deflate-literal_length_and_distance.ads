@@ -23,8 +23,12 @@ with Deflate.Huffman;
 
 package Deflate.Literal_Length_and_Distance is
 
+   type Deflate_Length is range 3 .. 258;
+   type Deflate_Distance is range 1 .. 32768;
+
    type Literal_Length_Alphabet is range 0 .. 287;
    subtype Literal_Length_Letter is Literal_Length_Alphabet range 0 .. 285;
+   subtype Literal_Letter is Literal_Length_Letter range 0 .. 255;
    subtype Length_Letter is Literal_Length_Letter range 257 .. 285;
 
    type Distance_Letter is range 0 .. 29;
@@ -34,6 +38,28 @@ package Deflate.Literal_Length_and_Distance is
 
    package Distance_Huffman is
      new Deflate.Huffman (Distance_Letter);
+
+
+   procedure Length_Value_to_Code
+     (Length            : in     Deflate_Length;
+      Letter            : out    Length_Letter;
+      Extra_Bits        : out    Dynamic_Bit_Array);
+
+   procedure Distance_Value_to_Code
+     (Distance          : in     Deflate_Distance;
+      Letter            : out    Distance_Letter;
+      Extra_Bits        : out    Dynamic_Bit_Array);
+
+   procedure Read_Block_Header
+     (Input                : in     Dynamic_Bit_Array;
+      C                    : in out Natural_64;
+      Literal_Length_Code  : out    Literal_Length_Huffman.Huffman_Code;
+      Distance_Code        : out    Distance_Huffman.Huffman_Code);
+
+   procedure Write_Block_Header
+     (Output               : out    Dynamic_Bit_Array;
+      Literal_Length_Code  : in     Literal_Length_Huffman.Huffman_Code;
+      Distance_Code        : in     Distance_Huffman.Huffman_Code);
 
 
    -- RFC 3.2.5
@@ -51,8 +77,6 @@ package Deflate.Literal_Length_and_Distance is
       281 .. 284  => 5,
       285         => 0);
 
-   type Deflate_Length is range 3 .. 258;
-   type Deflate_Distance is range 1 .. 32768;
 
    First_Length            : constant array (Length_Letter) of Deflate_Length :=
 
@@ -85,6 +109,38 @@ package Deflate.Literal_Length_and_Distance is
       283 => 195,
       284 => 227,
       285 => 258);
+
+--     Length_Value_to_Letter  : constant array (Deflate_Length) of Length_Letter :=
+--
+--       (        3   => 257,
+--                4   => 258,
+--                5   => 259,
+--                6   => 260,
+--                7   => 261,
+--                8   => 262,
+--                9   => 263,
+--               10   => 264,
+--         11 .. 12   => 265,
+--         13 .. 14   => 266,
+--         15 .. 16   => 267,
+--         17 .. 18   => 268,
+--         19 .. 22   => 269,
+--         23 .. 26   => 270,
+--         27 .. 30   => 271,
+--         31 .. 34   => 272,
+--         35 .. 42   => 273,
+--         43 .. 50   => 274,
+--         51 .. 58   => 275,
+--         59 .. 66   => 276,
+--         67 .. 82   => 277,
+--         83 .. 98   => 278,
+--         99 .. 114  => 279,
+--        115 .. 130  => 280,
+--        131 .. 162  => 281,
+--        163 .. 194  => 282,
+--        195 .. 226  => 283,
+--        227 .. 257  => 284,
+--        258         => 285);
 
    Distance_Extra_Bits     : constant
      Distance_Huffman.Huffman_Naturals (0 .. 29) :=
@@ -143,7 +199,7 @@ package Deflate.Literal_Length_and_Distance is
    -- RFC 3.2.6
 
    Fixed_Huffman_Bit_Lengths  : constant
-     Literal_Length_Huffman.Huffman_Lengths(Literal_Length_Alphabet) :=
+     Literal_Length_Huffman.Huffman_Lengths :=
 
      (  0 .. 143  => 8,
       144 .. 255  => 9,

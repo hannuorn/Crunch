@@ -10,7 +10,7 @@
 package Deflate.Compression is
 
    procedure Compress
-     (Input             : in     Dynamic_Bit_Array;
+     (Input             : in     Dynamic_Byte_Array;
       Output            : out    Dynamic_Bit_Array);
 
 end Deflate.Compression;

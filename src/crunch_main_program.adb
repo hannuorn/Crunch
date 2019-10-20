@@ -138,17 +138,36 @@ package body Crunch_Main_Program is
    end Write_File;
    
    
+   procedure Write_File
+     (Name              : in     String;
+      Data              : in     Dynamic_Byte_Array) is
+      
+      package Byte_Sequential_IO is new Ada.Sequential_IO (Byte);
+      use Byte_Sequential_IO;
+      
+      F                 : Byte_Sequential_IO.File_Type;
+      C                 : Natural_64;
+      
+   begin
+      Create(F, Out_File, Name);
+      C := Data.First;
+      while C <= Data.Last loop
+         Write(F, Data.Get(C));
+         C := C + 1;
+      end loop;
+      Close(F);
+   end Write_File;
+   
+   
    procedure Crunch_Run is
    
       package Flo_IO is new Ada.Text_IO.Float_IO (Float);
       
-      File              : Dynamic_Bit_Array;
-      Compressed        : Dynamic_Bit_Array;
+      Bytes             : Dynamic_Byte_Array;
+      Bits              : Dynamic_Bit_Array;
       Before            : Time;
       After             : Time;
       F                 : Float;
-      Data              : Dynamic_Bit_Array;
-      Bytes             : Dynamic_Byte_Array;
       LLDs              : Dynamic_LLD_Array;
 
    begin
@@ -158,10 +177,10 @@ package body Crunch_Main_Program is
          if Argument(1) = "-c" then
             Put_Line("Reading " & Argument(2) & "...");
             Before := Clock;
-            Read_File(Argument(2), File);
+            Read_File_as_Bytes(Argument(2), Bytes);
             After := Clock;
-            F := Float(File.Length)/8.0/1024.0/1024.0/Float(After - Before);
-            Put_Line("Size: " & Natural_64'Image(File.Length/8) & " bytes");
+            F := Float(Bytes.Length)/1024.0/1024.0/Float(After - Before);
+            Put_Line("Size: " & Natural_64'Image(Bytes.Length) & " bytes");
             --Put_Line("Reading time: " & Duration'Image(After - Before) & " seconds");
             Put("Speed: ");
             Ada.Float_Text_IO.Put(Item => F, Fore => 3, Aft => 1, Exp => 0);
@@ -170,19 +189,19 @@ package body Crunch_Main_Program is
             Put_Line("");
             Put_Line("Compressing...");
             Before := Clock;
-            Compress(File, Compressed);
+            Compress(Bytes, Bits);
             After := Clock;
-            F := Float(File.Length)/8.0/1024.0/1024.0/Float(After - Before);
+            F := Float(Bytes.Length)/8.0/1024.0/1024.0/Float(After - Before);
             Put_Line("Compression speed: ");
             Ada.Float_Text_IO.Put(Item => F, Fore => 3, Aft => 1, Exp => 0);
             Put_Line(" MB/s");
             Put_Line("Writing _crunch...");
-            Write_File(Argument(2) & "_crunch", Compressed);
+            Write_File(Argument(2) & "_crunch", Bits);
          elsif Argument(1) = "-d" then
             Put_Line("Decompressing " & Argument(2) & "...");
-            Read_File(Argument(2), File);
-            Decompress(File, Data);
-            Write_File(Argument(2) & "_deco", Data);
+            Read_File(Argument(2), Bits);
+            Decompress(Bits, Bytes);
+            Write_File(Argument(2) & "_deco", Bytes);
          elsif Argument(1) = "-lz77" then
             Put_Line("Reading " & Argument(2) & "...");
             Before := Clock;

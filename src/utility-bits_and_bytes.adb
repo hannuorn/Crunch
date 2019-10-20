@@ -22,6 +22,43 @@ with Ada.Unchecked_Conversion;
 
 package body Utility.Bits_and_Bytes is
 
+   
+   function To_Bits
+     (N                 : in     Natural_64;
+      Length            : in     Natural_64)
+                          return Dynamic_Bit_Array is
+      
+      X                 : Natural_64 := N;
+      Bits              : Bit_Array (1 .. Length);
+      Result            : Dynamic_Bit_Array;
+      
+   begin
+      for I in reverse 1 .. Length loop
+         Bits(I) := Bit(X mod 2);
+         X := X / 2;
+      end loop;
+      Result.Set(Bits);
+      return Result;
+   end To_Bits;
+
+   
+   function To_Number
+     (Bits              : in     Bit_Array)
+                          return Natural_64 is
+   
+      N                 : Natural_64;
+      B                 : Natural_64;
+      
+   begin
+      N := 0;
+      B := 1;
+      for I in reverse Bits'Range loop
+         N := N + Natural_64(Bits(I)) * B;
+         B := 2 * B;
+      end loop;
+      return N;
+   end To_Number;
+    
 
    function To_Bits
      (B                 : in     Byte)

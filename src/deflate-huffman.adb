@@ -112,7 +112,23 @@ package body Deflate.Huffman is
       return S;
    end To_String;
    
-                          
+   
+   function Number_of_Codewords
+     (Code              : in     Huffman_Code)
+                          return Natural_64 is
+   
+      N                 : Natural_64 := 0;
+      
+   begin
+      for L in Code.Lengths'Range loop
+         if Code.Lengths(L) > 0 then
+            N := N + 1;
+         end if;
+      end loop;
+      return N;
+   end Number_of_Codewords;
+   
+   
    procedure Find
      (Code              : in     Huffman_Code;
       Stream            : in     Dynamic_Bit_Array;
@@ -130,6 +146,7 @@ package body Deflate.Huffman is
       Node := Code.Tree;
       I := Counter;
       loop
+         exit when I > Stream.Last;
          exit when Node = null or else Node.Is_Leaf;
          case Stream.Get(Index => I) is
             when 0 => Node := Node.Edge_0;
@@ -145,37 +162,37 @@ package body Deflate.Huffman is
    end Find;
 
 
-   function To_Huffman_Codeword
-     (N                 : in     Natural_64;
-      Length            : in     Bit_Length)
-                          return Huffman_Codeword is
-
-      X                 : Natural_64;
-      Bits              : Bit_Array(0 .. Natural_64(Limited_Bit_Length'Last));
-      I                 : Bit_Length;
-      C                 : Huffman_Codeword;
-      B                 : Bit;
-      
-   begin
-      X := N;
-      I := 0;
-      while X > 0 and I < Limited_Bit_Length'Last loop
-         B := Bit(X mod 2);
-         Bits(Natural_64(I)) := B;
-         X := X / 2;
-         I := I + 1;
-      end loop;
-      -- I is now number of bits written to Bits
-      -- First add leading zeros: (Length - I) zeros
-      -- Then add the bits in reverse order
-      for J in 1 .. Length - I loop
-         C.Add(0);
-      end loop;
-      for K in 1 .. I loop
-         C.Add(Bits(Natural_64(I) - Natural_64(K)));
-      end loop;
-      return C;
-   end To_Huffman_Codeword;
+--     function To_Huffman_Codeword
+--       (N                 : in     Natural_64;
+--        Length            : in     Bit_Length)
+--                            return Huffman_Codeword is
+--  
+--        X                 : Natural_64;
+--        Bits              : Bit_Array(0 .. Natural_64(Limited_Bit_Length'Last));
+--        I                 : Bit_Length;
+--        C                 : Huffman_Codeword;
+--        B                 : Bit;
+--        
+--     begin
+--        X := N;
+--        I := 0;
+--        while X > 0 and I < Limited_Bit_Length'Last loop
+--           B := Bit(X mod 2);
+--           Bits(Natural_64(I)) := B;
+--           X := X / 2;
+--           I := I + 1;
+--        end loop;
+--        -- I is now number of bits written to Bits
+--        -- First add leading zeros: (Length - I) zeros
+--        -- Then add the bits in reverse order
+--        for J in 1 .. Length - I loop
+--           C.Add(0);
+--        end loop;
+--        for K in 1 .. I loop
+--           C.Add(Bits(Natural_64(I) - Natural_64(K)));
+--        end loop;
+--        return C;
+--     end To_Huffman_Codeword;
    
    
    procedure Add_to_Tree
@@ -234,15 +251,15 @@ package body Deflate.Huffman is
      (Code              : out    Huffman_Code;
       Lengths           : in     Huffman_Lengths) is
       
-      type Bit_Length_Array is array (Limited_Bit_Length) of Natural_64;
+      type Bit_Length_Array is array (Huffman_Length) of Natural_64;
       
       BL_Count          : Bit_Length_Array := (others => 0);
       Next_Code         : Bit_Length_Array := (others => 0);
       Number_Code       : Natural_64;
       Previous_Count    : Natural_64;
       Codewords         : Huffman_Codewords;
-      Len               : Bit_Length;
-      Max_Len           : Bit_Length := 0;
+      Len               : Huffman_Length;
+      Max_Len           : Huffman_Length := 0;
       
    begin
       -- 1) Count the number of codes for each code length.
@@ -269,12 +286,14 @@ package body Deflate.Huffman is
                
          Next_Code(Bits) := Number_Code;
          
-         if Next_Code(Bits) > 2**Natural(Bits) then
+         if Next_Code(Bits) >= 2**Natural(Bits) then
             Put_Line("WARNING");
-            Put_Line("for BL" & Bit_Length'Image(Bits) & ", Next_Code = " &
+            Put_Line("for BL" & Huffman_Length'Image(Bits) & ", Next_Code = " &
                   Natural_64'Image(Next_Code(Bits)) & " which is too long!");
          end if;
+         Put_Line("Bits = " & Huffman_Length'Image(Bits) & ", next-Code = " & Natural_64'Image(Number_Code));
          Previous_Count := BL_Count(Bits);
+         Put_Line("BL_Count = " & Natural_64'Image(BL_Count(Bits)));
       end loop;
       
       -- Debugging
@@ -288,7 +307,7 @@ package body Deflate.Huffman is
       for L in Codewords'Range loop
          Len := Lengths(L);
          if Len /= 0 then
-            Codewords(L) := To_Huffman_Codeword(Next_Code(Len), Len);
+            Codewords(L) := To_Bits(Next_Code(Len), Natural_64(Len));
             Next_Code(Len) := Next_Code(Len) + 1;
          end if;
       end loop;
@@ -314,7 +333,7 @@ package body Deflate.Huffman is
 
    procedure Fill_in_Bit_Lengths
      (Lengths           : in out Huffman_Lengths;
-      Depth             : in     Bit_Length;
+      Depth             : in     Huffman_Length;
       Node              : in     Huffman_Tree_Node_Access) is
       
    begin
@@ -333,7 +352,7 @@ package body Deflate.Huffman is
      (Tree              : in     Huffman_Tree_Node_Access)
                           return Huffman_Lengths is
 
-      Lengths           : Huffman_Lengths(Letter);
+      Lengths           : Huffman_Lengths;
       
    begin
       Fill_in_Bit_Lengths(Lengths, 0, Tree);
@@ -403,7 +422,7 @@ package body Deflate.Huffman is
       Node_0            : Huffman_Tree_Node_Access;
       Node_1            : Huffman_Tree_Node_Access;
       N                 : Huffman_Tree_Node_Access;
-      Lengths           : Huffman_Lengths(Letter);
+      Lengths           : Huffman_Lengths;
       
    begin
       for L in Weights'Range loop
@@ -555,7 +574,7 @@ package body Deflate.Huffman is
       I                    : Natural_64;
       Packages             : Natural_64;
       Alphabet_Size        : Natural_64 := 0;
-      Lengths              : Huffman_Lengths(Letter);
+      Lengths              : Huffman_Lengths;
 
    begin
       -- Initialize the list of letters.
@@ -642,14 +661,14 @@ package body Deflate.Huffman is
       for I in 1 .. 2*Alphabet_Size - 2 loop
          I1.Letters.Find_First(L, L_OK);
          while L_OK loop
-            Lengths(L) := Lengths(L) + Bit_Length(I1.Letters.Get(L));
+            Lengths(L) := Lengths(L) + Huffman_Length(I1.Letters.Get(L));
             I1.Letters.Find_Next(L, L_OK);
          end loop;
          PM_Merge.Find_Next(I1, OK);
       end loop;
-      -- Put_Line("--- P-M algorithm results");
-      -- Print(Lengths);
-      -- Put_Line("--- P-M algorithm results complete");
+      Put_Line("--- P-M algorithm results");
+      Print(Lengths);
+      Put_Line("--- P-M algorithm results complete");
       Build(Code, Lengths);
       Code.Has_Weights := TRUE;
       Code.Weights := Weights;
@@ -663,7 +682,7 @@ package body Deflate.Huffman is
       Put_Line("Letter : code length");
       for I in Lengths'Range loop
          if Lengths(I) > 0 then
-            Put_Line(Letter'Image(I) & " : " & Bit_Length'Image(Lengths(I)));
+            Put_Line(Letter'Image(I) & " : " & Huffman_Length'Image(Lengths(I)));
          end if;
       end loop;
       Put_Line("");
@@ -724,7 +743,7 @@ package body Deflate.Huffman is
       
       package Symbol_Info_Trees is new Utility.Binary_Search_Trees
             (Symbol_Info, Symbol_Info, "<", Symbol_Equals);
-      type Bit_Length_Array is array (Limited_Bit_Length) of Natural;
+      type Bit_Length_Array is array (Huffman_Length) of Natural;
       
       BL_Count          : Bit_Length_Array := (others => 0);
      
@@ -803,14 +822,14 @@ package body Deflate.Huffman is
       
       -- summary by code length, how many codes for each length
       for I in CW'Range loop
-         BL_Count(Bit_Length(CW(I).Length)) := 
-               BL_Count(Bit_Length(CW(I).Length)) + 1;
+         BL_Count(Huffman_Length(CW(I).Length)) := 
+               BL_Count(Huffman_Length(CW(I).Length)) + 1;
       end loop;
       Put_Line("Bit length : Number of codes");
       for I in 1 .. Max_Bit_Length loop
-         if BL_Count(Bit_Length(I)) > 0 then
-            Put_Line("   " & Bit_Length'Image(Bit_Length(I)) & " :" & 
-                  Natural'Image(BL_Count(Bit_Length(I))));
+         if BL_Count(Huffman_Length(I)) > 0 then
+            Put_Line("   " & Huffman_Length'Image(Huffman_Length(I)) & " :" & 
+                  Natural'Image(BL_Count(Huffman_Length(I))));
          end if;
       end loop;
    end Print;

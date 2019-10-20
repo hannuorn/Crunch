@@ -25,24 +25,31 @@ with Utility.Bits_and_Bytes;     use Utility.Bits_and_Bytes;
 generic
 
    type Letter is (<>);
-   Max_Bit_Length       : Natural := 60;
+   Max_Bit_Length       : Natural := 32;
    
    
 package Deflate.Huffman is
 
-   subtype Huffman_Codeword is Dynamic_Bit_Arrays.Dynamic_Array;
+   subtype Huffman_Codeword is Dynamic_Bit_Array;
    type Huffman_Codewords is array (Letter) of Huffman_Codeword;
-   type Bit_Length is new Natural;
-   subtype Limited_Bit_Length is Bit_Length range 0 .. Bit_Length(Max_Bit_Length);
-   type Huffman_Lengths is array (Letter range <>) of Bit_Length
+
+   type Huffman_Length is new Natural range 0 .. Max_Bit_Length;
+   type Huffman_Lengths is array (Letter) of Huffman_Length
       with Default_Component_Value => 0;
-   type Huffman_Naturals is array (Letter range <>) of Natural;
+   
+   type Huffman_Naturals is array (Letter range <>) of Natural_64;
    type Letter_Weights is array (Letter) of Natural_64
       with Default_Component_Value => 0;
 
    type Huffman_Code is tagged private;
 
 
+   
+   
+   function Number_of_Codewords
+     (Code              : in     Huffman_Code)
+                          return Natural_64;
+   
    ------------------------------------------------------------------------
    -- Build
    --
@@ -135,7 +142,7 @@ private
       record
          Has_Weights       : Boolean := FALSE;
          Weights           : Letter_Weights;
-         Lengths           : Huffman_Lengths(Letter);
+         Lengths           : Huffman_Lengths;
          Codewords         : Huffman_Codewords;
          Tree              : Huffman_Tree_Node_Access;
       end record;

@@ -20,11 +20,65 @@ package body Test_Deflate.Test_Huffman is
    package Character_Huffman is
          new Deflate.Huffman(Character); use Character_Huffman;
 
+   
+   procedure Test_Case_1 is
+      
+      type Deflate_Bit_Len is range 0 .. 18;
+      package CL_Huffman is new Deflate.Huffman(Deflate_Bit_Len);
+      Weights           : CL_Huffman.Letter_Weights;
+      CL                : CL_Huffman.Huffman_Code;
+      CL_Codewords      : CL_Huffman.Huffman_Codewords;
+
+   begin
+      Begin_Test("Test_Case_1");
+      Weights :=
+        (0  => 21,
+         1  => 2,
+         2  => 0,
+         3  => 2,
+         4  => 1,
+         5  => 4,
+         6  => 2,
+         7  => 7,
+         8  => 39,
+         9  => 99,
+         10 => 132,
+         11 => 2,
+         12 => 2,
+         13 => 3,
+         14 => 2,
+         15 => 0,
+         others => 0);
+      
+      CL.Build_Length_Limited(7, Weights);
+      CL_Codewords := CL.Get_Codewords;
+      if CL_Codewords(10).Get_Array = (1 => 0) then
+         Print("Codeword for letter 10 is 0. All other codewords must start with 1.");
+         for I in Deflate_Bit_Len'Range loop
+            declare
+               Bits     : Bit_Array := CL_Codewords(I).Get_Array;
+            begin
+               if I /= 10 and Bits'Length > 0 then
+                  Assert_Equals
+                    (Bits(Bits'First) = 0, FALSE, 
+                     "First bit is 0. (Code for letter " & 
+                       Deflate_Bit_Len'Image(I) & 
+                       " is " & CL_Huffman.To_String(CL_Codewords(I)) & ")");
+               end if;
+            end;
+         end loop;
+      end if;
+      
+      CL.Print;
+      
+      End_Test;
+   end Test_Case_1;
+   
 
    procedure Basic_Test is
 
       Weights           : Byte_Huffman.Letter_Weights;
-      Lengths           : Byte_Huffman.Huffman_Lengths(Byte);
+      Lengths           : Byte_Huffman.Huffman_Lengths;
       Codewords         : Byte_Huffman.Huffman_Codewords;
       HC                : Byte_Huffman.Huffman_Code;
       
@@ -90,6 +144,7 @@ package body Test_Deflate.Test_Huffman is
       Begin_Test("Huffman");
       
       Basic_Test;
+      Test_Case_1;
       
       End_Test;
    end Test;

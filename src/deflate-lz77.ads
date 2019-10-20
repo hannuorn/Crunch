@@ -39,8 +39,6 @@ package Deflate.LZ77 is
    
    subtype Tribyte_Tree is Tribyte_Trees.Binary_Search_Tree;
 
-   procedure Not_Implemented;
-   
    type Literal_Length_Distance (Is_Literal : Boolean := TRUE) is
       record
          case Is_Literal is
@@ -70,5 +68,16 @@ package Deflate.LZ77 is
    procedure Compress
      (Input             : in     Dynamic_Byte_Array;
       Output            : out    Dynamic_LLD_Array);
+
+   procedure Count_Weights
+     (LLDs              : in     Dynamic_LLD_Array;
+      LL_Weights        : out    Literal_Length_Huffman.Letter_Weights;
+      Distance_Weights  : out    Distance_Huffman.Letter_Weights);
+
+   procedure LLD_Array_to_Bit_Array
+     (LLDs              : in     Dynamic_LLD_Array;
+      LL_Code           : in     Literal_Length_Huffman.Huffman_Code;
+      Distance_Code     : in     Distance_Huffman.Huffman_Code;
+      Output            : in out Dynamic_Bit_Array);
    
 end Deflate.LZ77;

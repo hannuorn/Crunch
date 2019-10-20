@@ -56,6 +56,11 @@ package Utility.Bits_and_Bytes is
       
    subtype Dynamic_Bit_Array  is Dynamic_Bit_Arrays.Dynamic_Array;
    subtype Dynamic_Byte_Array is Dynamic_Byte_Arrays.Dynamic_Array;
+   
+   Empty_Dynamic_Bit_Array    : constant Dynamic_Bit_Array := 
+         Dynamic_Bit_Arrays.Empty_Dynamic_Array;
+   Empty_Dynamic_Byte_Array    : constant Dynamic_Byte_Array := 
+         Dynamic_Byte_Arrays.Empty_Dynamic_Array;
 
 
    function To_Bits
@@ -66,6 +71,15 @@ package Utility.Bits_and_Bytes is
      (Bits              : in     Byte_Bits)
                           return Byte;
 
+   function To_Bits
+     (N                 : in     Natural_64;
+      Length            : in     Natural_64)
+                          return Dynamic_Bit_Array;
+   
+   function To_Number
+     (Bits              : in     Bit_Array)
+                          return Natural_64;
+   
    procedure Add
      (Stream            : in out Dynamic_Bit_Array;
       B                 : in     Byte);
