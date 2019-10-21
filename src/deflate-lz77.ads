@@ -58,4 +58,9 @@ package Deflate.LZ77 is
       Distance_Code     : in     Distance_Huffman.Huffman_Code;
       Output            : in out Dynamic_Bit_Array);
 
+   procedure LLD_Array_to_ASCII
+     (LLDs              : in     Dynamic_LLD_Array;
+      Input             : in     Dynamic_Byte_Array;
+      Output            : out    Dynamic_Byte_Array);
+   
 end Deflate.LZ77;

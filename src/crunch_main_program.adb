@@ -167,6 +167,7 @@ package body Crunch_Main_Program is
       After             : Time;
       F                 : Float;
       LLDs              : Dynamic_LLD_Array;
+      LZ_Text           : Dynamic_Byte_Array;
 
    begin
       Put_Line("Crunch");
@@ -232,11 +233,12 @@ package body Crunch_Main_Program is
             Put_Line("");
             
             Write_File(Argument(2) & "_deco", Bytes);
-         elsif Argument(1) = "-lz77" then
+         elsif Argument(1) = "-lz" then
             Put_Line("Reading " & Argument(2) & "...");
             Before := Clock;
             Read_File_as_Bytes(Argument(2), Bytes);
-            Deflate.LZ77.Compress(Bytes, LLDs);
+            Get_LZ_Text_Results(Bytes, LZ_Text);
+            Write_File(Argument(2) & "_crunch_LZ", LZ_Text);
          end if;
       end if;
    end Crunch_Run;

@@ -71,6 +71,7 @@ package body Deflate.Compression is
       LL_Codewords      : Literal_Length_Huffman.Huffman_Codewords;
       Distance_Code     : Distance_Huffman.Huffman_Code;
       EOB               : Literal_Length_Huffman.Huffman_Codeword;
+      Text_Output       : Dynamic_Byte_Array;
 
    begin
       LZ77.Compress(Input, LLDs);
@@ -94,4 +95,17 @@ package body Deflate.Compression is
 
    end Compress;
 
+   
+   procedure Get_LZ_Text_Results
+     (Input             : in     Dynamic_Byte_Array;
+      Output            : out    Dynamic_Byte_Array) is
+
+      LLDs              : Dynamic_LLD_Array;
+
+   begin
+      LZ77.Compress(Input, LLDs);
+      LLD_Array_to_ASCII(LLDs, Input, Output);
+   end Get_LZ_Text_Results;
+   
+   
 end Deflate.Compression;

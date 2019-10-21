@@ -103,6 +103,9 @@ package body Deflate.Literal_Length_and_Distance is
          when  12289 .. 16384    => L_and_Extra := (27, 12);
          when  16385 .. 24576    => L_and_Extra := (28, 13);
          when  24577 .. 32768    => L_and_Extra := (29, 13);
+            -- Deflate64
+         when  32769 .. 49152    => L_and_Extra := (30, 14);
+         when  49153 .. 65536    => L_and_Extra := (31, 14);
       end case;
       Letter := L_and_Extra.L;
       Extra_Bits :=

@@ -13,6 +13,7 @@ with Ada.Unchecked_Deallocation;
 package body Deflate.LZ77 is
 
    subtype Tribyte is Byte_Array (1 .. 3);
+   type Tribyte_Number is range 0 .. 2**(3 * 8) - 1;
    
    -- List of locations where a tribyte can be found
    
@@ -24,16 +25,20 @@ package body Deflate.LZ77 is
       
    -- Tree of tribytes, given a tribyte, gives list of locations for it
 
-   package Tribyte_Location_Tree_Controlled_Accesses is 
-         new Controlled_Accesses
-               (Tribyte_Location_Tree, Tribyte_Location_Tree_Access);
+   package Tribyte_Location_Tree_Controlled_Accesses is
+     new Controlled_Accesses
+       (Tribyte_Location_Tree, Tribyte_Location_Tree_Access);
+   use Tribyte_Location_Tree_Controlled_Accesses;
+   
    subtype Tribyte_Location_Tree_Controlled_Access is
          Tribyte_Location_Tree_Controlled_Accesses.Controlled_Access;
                
    package Tribyte_Trees is new Utility.Binary_Search_Trees
-     (Tribyte, Tribyte_Location_Tree_Access, "<", "=");
+     (Tribyte, Tribyte_Location_Tree_Controlled_Access, "<", "=");
    
    subtype Tribyte_Tree is Tribyte_Trees.Binary_Search_Tree;
+   
+   type Tribyte_Location_Array is array (Tribyte_Number) of Tribyte_Location_Tree_Controlled_Access;
 
    
    function Match_Length
@@ -53,6 +58,81 @@ package body Deflate.LZ77 is
    end Match_Length;
       
    
+   procedure Remove_Obsolete_Locations
+     (Locations         : in out Tribyte_Location_Tree;
+      Input             : in     Dynamic_Byte_Array;
+      Counter           : in     Natural_64) is
+      
+      X                 : Integer_64;
+      L                 : Natural_64;
+      Found             : Boolean;
+      
+   begin
+      X := Counter - Natural_64(Deflate_Distance'Last) - 1;
+      if X >= Input.First then
+         Locations.Find_First(L, Found);
+         while Found and then L <= X loop
+            Locations.Remove(L);
+            Locations.Find_First(L, Found);
+         end loop;
+      end if;
+   end Remove_Obsolete_Locations;
+   
+   
+   procedure Find_Longest_Match
+     (Input             : in     Dynamic_Byte_Array;
+      C                 : in     Natural_64;
+      Tree              : in out Tribyte_Tree;
+      Found             : out    Boolean;
+      Length            : out    Deflate_Length;
+      Distance          : out    Deflate_Distance) is
+      
+      Tri               : Tribyte;
+      Longest_Len       : Deflate_Length;
+      Longest_Loc       : Natural_64;
+      L                 : Natural_64;
+      Len               : Natural_64;
+      L_Found           : Boolean;
+      
+   begin
+      Found := FALSE;
+      Length := Deflate_Length'First;
+      Distance := Deflate_Distance'First;
+      Input.Get(C, Tri);
+      if Tree.Contains(Tri) then
+         declare
+            Locations      : Tribyte_Location_Tree_Access := Access_to(Tree.Get(Tri));
+         begin
+            if not Locations.Is_Empty then
+               Longest_Len := Deflate_Length'First;
+               Longest_Loc := C;
+               Locations.Find_Last(L, L_Found);
+               while L_Found loop
+                  Len := Match_Length(Input, C, L);
+                  if C - L <= Natural_64(Deflate_Distance'Last) then
+                     Found := TRUE;
+                     if Longest_Loc = C or Len > Natural_64(Longest_Len) then
+                        Longest_Loc := L;
+                        if Len >= Natural_64(Deflate_Length'Last) then
+                           Longest_Len := Deflate_Length'Last;
+                           exit;
+                        else
+                           Longest_Len := Deflate_Length(Len);
+                        end if;
+                     end if;
+                  end if;
+                  Locations.Find_Previous(L, L_Found);
+               end loop;
+               if Found then
+                  Length := Longest_Len;
+                  Distance := Deflate_Distance(C - Longest_Loc);
+               end if;
+            end if;
+         end;
+      end if;
+   end Find_Longest_Match;
+   
+   
    procedure Compress
      (Input             : in     Dynamic_Byte_Array;
       Output            : out    Dynamic_LLD_Array) is
@@ -64,13 +144,11 @@ package body Deflate.LZ77 is
       C                 : Natural_64;
       Tri               : Tribyte;
       Tritree           : Tribyte_Tree;
-      Loc               : Tribyte_Location_Tree_Access;
-      Loc_Tree          : Tribyte_Location_Tree_Controlled_Access;
-      Longest_Len       : Deflate_Length;
-      Longest_Loc       : Natural_64;
-      L                 : Natural_64;
+      Length            : Deflate_Length;
+      Distance          : Deflate_Distance;
+      Length_2          : Deflate_Length;
+      Distance_2        : Deflate_Distance;
       Found             : Boolean;
-      Len               : Natural_64;
       LLD               : Literal_Length_Distance;
       B                 : Byte;
       X                 : Integer_64;
@@ -81,115 +159,75 @@ package body Deflate.LZ77 is
       loop
          exit when Input.Last - C < 2;
          
-         -- Debugging
---         Tritree.Verify;
-         
          -- Find matches
          Matches_Found := FALSE;
          Input.Get(C, Tri);
          if Tritree.Contains(Tri) then
---            Loc := Access_to(Tritree.Get(Tri));
-            Loc := Tritree.Get(Tri);
---            Loc.Verify;
+            declare
+               Locations      : Tribyte_Location_Tree_Access := Access_to(Tritree.Get(Tri));
+            begin
+               Remove_Obsolete_Locations(Locations.all, Input, C);
             
-            -- Clean up the location tree, remove locations that are too far
-            X := C - Natural_64(Deflate_Distance'Last) - 1;
-            if X >= Input.First then
-               Loc.Find_First(L, Found);
-               while Found and then L <= X loop
-                  Loc.Remove(L);
---                  Loc.Verify;
-                  Loc.Find_First(L, Found);
-               end loop;
-            end if;
-            if not Loc.Is_Empty then
-               -- Matches found. Find the longest one and output length/distance.
-               Matches_Found := TRUE;
-               Longest_Len := Deflate_Length'First;
-               Longest_Loc := C;
-               Loc.Find_Last(L, Found);
-               while Found loop
-                  Len := Match_Length(Input, C, L);
-                  if Longest_Loc = C or Len > Natural_64(Longest_Len) then
-                     Longest_Loc := L;
-                     if Len >= Natural_64(Deflate_Length'Last) then
-                        Longest_Len := Deflate_Length'Last;
-                        exit;
-                     else
-                        Longest_Len := Deflate_Length(Len);
-                     end if;
-                  end if;
-                  Loc.Find_Previous(L, Found);
-               end loop;
-               Loc.Put(C, C);
-               
-               LLD := 
-                 (Is_Literal  => FALSE,
-                  Length      => Longest_Len,
-                  Distance    => Deflate_Distance(C - Longest_Loc));
-
-               -- Add all tribytes within the skipped distance to the tree
-               -- Remove stuff that the skipped distance renders obsolete
-               
-               for I in C + 1 .. C + Natural_64(Longest_Len) - 1 loop
-                  exit when Input.Last - I < 2;
+               if not Locations.Is_Empty then
+                  -- Matches found. Find the longest one and output length/distance.
+                  Matches_Found := TRUE;
                   
-                  -- Add tribyte to tree
+                  Find_Longest_Match(Input, C, Tritree, Found, Length, Distance);
+                  Find_Longest_Match(Input, C + 1, Tritree, Found, Length_2, Distance_2);
                   
-                  Input.Get(I, Tri);
-                  if Tritree.Contains(Tri) then
---                     Loc := Access_to(Tritree.Get(Tri));
-                     Loc := Tritree.Get(Tri);
-                     Loc.Put(I, I);
+                  if Found and then Length_2 > Length then
+                     -- Make a literal so a longer match can be used on next round
+                     Matches_Found := FALSE;
                   else
---                     Loc_Tree := Create;
---                     Loc := Access_to(Loc_Tree);
-                     Loc := new Tribyte_Location_Tree;
-                     Loc.Put(I, I);
---                     if C = 34167 then
---                        Tritree.Verify;
---                     end if;
---                     Tritree.Put(Tri, Loc_Tree);
-                     Tritree.Put(Tri, Loc);
+                    LLD := 
+                       (Is_Literal  => FALSE,
+                        Length      => Length,
+                        Distance    => Distance);
                   end if;
+ 
+                  Locations.Put(C, C);
+                  Remove_Obsolete_Locations(Locations.all, Input, C);
                   
-                  -- Remove obsoletes
+                  if Matches_Found then
                   
-                  X := I - Natural_64(Deflate_Distance'Last) - 1;
-                  if X >= Input.First then
-                     Input.Get(X, Tri);
-                     if Tritree.Contains(Tri) then
-                        Loc := Tritree.Get(Tri);
-                        Loc.Find_First(L, Found);
-                        while Found and then L <= X loop
-                           Loc.Remove(L);
---                           Loc.Verify;
-                           Loc.Find_First(L, Found);
-                        end loop;
-                        if Loc.Is_Empty then
-  --                         if C = 33158 then
---                              Tritree.Verify;
---                           end if;
---                             Tritree.Remove(Tri);
---                             Free(Loc);
---                             Tritree.Verify;
-                           null;
+                     -- Add all tribytes within the skipped distance to the tree
+                     -- Remove stuff that the skipped distance renders obsolete
+                     
+                     for I in C + 1 .. C + Natural_64(Length) - 1 loop
+                        exit when Input.Last - I < 2;
+                        
+                        -- Add tribyte to tree
+                        
+                        Input.Get(I, Tri);
+                        if not Tritree.Contains(Tri) then
+                           Tritree.Put(Tri, Create);
                         end if;
-                     end if;
+                        Access_to(Tritree.Get(Tri)).Put(I, I);
+                        
+                        -- Remove obsoletes
+                        
+                        X := I - Natural_64(Deflate_Distance'Last) - 1;
+                        if X >= Input.First then
+                           Input.Get(X, Tri);
+                           if Tritree.Contains(Tri) then
+                              Remove_Obsolete_Locations(Access_to(Tritree.Get(Tri)).all, Input, C);
+                           end if;
+                        end if;
+                        
+                     end loop;
+                     C := C + Natural_64(Length);
+                  else
+                     Remove_Obsolete_Locations(Locations.all, Input, C);
                   end if;
                   
-               end loop;
-               C := C + Natural_64(Longest_Len);
-            end if;
+               end if;
+            end;
          else -- if Tritree.Contains(Tri)
---              Loc_Tree := Create;
---              Loc := Access_to(Loc_Tree);
-            Loc := new Tribyte_Location_Tree;
-            Loc.Put(C, C);
-            Tritree.Put(Tri, Loc);
+            Tritree.Put(Tri, Create);
+            Access_to(Tritree.Get(Tri)).Put(C, C);
          end if;
          if not Matches_Found then
-            -- No matches found. Output literal.
+            -- Output literal.
             -- Remove the location that becomes obsolete.
             Input.Read(C, B);
             LLD := 
@@ -200,18 +238,7 @@ package body Deflate.LZ77 is
             if X >= Input.First then
                Input.Get(X, Tri);
                if Tritree.Contains(Tri) then
-                  Loc := Tritree.Get(Tri);
-                  Loc.Find_First(L, Found);
-                  while Found and then L <= X loop
-                     Loc.Remove(L);
-                     Loc.Find_First(L, Found);
-                  end loop;
-                  if Loc.Is_Empty then
---                       Tritree.Remove(Tri);
---                       Free(Loc);
---                       Tritree.Verify;
-                     null;
-                  end if;
+                  Remove_Obsolete_Locations(Access_to(Tritree.Get(Tri)).all, Input, C);
                end if;
             end if;
          end if;
@@ -322,6 +349,50 @@ package body Deflate.LZ77 is
          end if;
       end loop;
    end LLD_Array_to_Bit_Array;
+   
+   
+   procedure LLD_Array_to_ASCII
+     (LLDs              : in     Dynamic_LLD_Array;
+      Input             : in     Dynamic_Byte_Array;
+      Output            : out    Dynamic_Byte_Array) is
 
+      LLD               : Literal_Length_Distance;
+      C                 : Natural_64 := Input.First;
+      
+   begin
+      for I in LLDs.First .. LLDs.Last loop
+         LLD := LLDs.Get(I);
+         if LLD.Is_Literal then
+            Output.Add(LLD.Literal);
+            C := C + 1;
+         else
+            declare
+               S_Len    : String := Deflate_Length'Image(LLD.Length);
+               S_Dist   : String := Deflate_Distance'Image(LLD.Distance);
+               
+            begin
+               Output.Add(Character'Pos('['));
+               for I in S_Len'Range loop
+                  Output.Add(Byte(Character'Pos(S_Len(I))));
+               end loop;
+               Output.Add(Character'Pos(','));
+               for I in S_Dist'Range loop
+                  Output.Add(Byte(Character'Pos(S_Dist(I))));
+               end loop;
+               Output.Add(Character'Pos(']'));
+               Output.Add(Character'Pos('='));
+               Output.Add(Character'Pos('"'));
+               for X in 0 .. LLD.Length - 1 loop
+                  Output.Add
+                    (Input.Get
+                       (C + Natural_64(X) - Natural_64(LLD.Distance)));
+               end loop;
+               Output.Add(Character'Pos('"'));
+               C := C + Natural_64(LLD.Length);
+            end;
+         end if;
+      end loop;
+   end LLD_Array_to_ASCII;
+   
    
 end Deflate.LZ77;

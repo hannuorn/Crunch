@@ -24,14 +24,18 @@ with Deflate.Huffman;
 package Deflate.Literal_Length_and_Distance is
 
    type Deflate_Length is range 3 .. 258;
-   type Deflate_Distance is range 1 .. 32768;
+   --   type Deflate_Distance is range 1 .. 32768;
+   -- Deflate64:
+   type Deflate_Distance is range 1 .. 65536;
 
    type Literal_Length_Alphabet is range 0 .. 287;
    subtype Literal_Length_Letter is Literal_Length_Alphabet range 0 .. 285;
    subtype Literal_Letter is Literal_Length_Letter range 0 .. 255;
    subtype Length_Letter is Literal_Length_Letter range 257 .. 285;
 
-   type Distance_Letter is range 0 .. 29;
+   -- type Distance_Letter is range 0 .. 29;
+   -- Deflate64:
+   type Distance_Letter is range 0 .. 31;
 
    package Literal_Length_Huffman is new Deflate.Huffman
      (Letter_Type    => Literal_Length_Alphabet,
@@ -69,7 +73,7 @@ package Deflate.Literal_Length_and_Distance is
    End_of_Block            : constant Literal_Length_Letter := 256;
 
    Length_Extra_Bits       : constant
-     Literal_Length_Huffman.Huffman_Naturals (257 .. 285):=
+     Literal_Length_Huffman.Huffman_Naturals (Length_Letter):=
 
      (257 .. 264  => 0,
       265 .. 268  => 1,
@@ -113,7 +117,7 @@ package Deflate.Literal_Length_and_Distance is
       285 => 258);
 
    Distance_Extra_Bits     : constant
-     Distance_Huffman.Huffman_Naturals (0 .. 29) :=
+     Distance_Huffman.Huffman_Naturals (Distance_Letter) :=
 
      ( 0 .. 3  => 0,
        4 .. 5  => 1,
@@ -128,9 +132,12 @@ package Deflate.Literal_Length_and_Distance is
       22 .. 23 => 10,
       24 .. 25 => 11,
       26 .. 27 => 12,
-      28 .. 29 => 13);
+      28 .. 29 => 13,
+      30 .. 31 => 14);
 
-   Max_Distance            : constant := 32768;
+   --   Max_Distance            : constant := 32768;
+   -- Deflate64:
+   Max_Distance            : constant := 65536;
 
    First_Distance          : constant array (Distance_Letter) of Deflate_Distance :=
 
@@ -163,7 +170,9 @@ package Deflate.Literal_Length_and_Distance is
       26 => 8193,
       27 => 12289,
       28 => 16385,
-      29 => 24577);
+      29 => 24577,
+      30 => 32769,
+      31 => 49153);
 
 
    -- RFC 3.2.6

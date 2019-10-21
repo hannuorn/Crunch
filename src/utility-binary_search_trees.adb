@@ -75,6 +75,7 @@ package body Utility.Binary_Search_Trees is
      
    begin
       Object.Root := null;
+      Object.Last_Find := null;
    end Initialize;
    
    
@@ -83,6 +84,7 @@ package body Utility.Binary_Search_Trees is
      
    begin
       Object.Root := Copy_of_Subtree(Object.Root);
+      Object.Last_Find := null;
    end Adjust;
 
 
@@ -112,7 +114,7 @@ package body Utility.Binary_Search_Trees is
          loop
             if L /= R then
                return FALSE;
-            elsif Left.Get(L) /= Right.Get(R) then
+            elsif RB_Find(Left.Root, L).Value /= RB_Find(Right.Root, L).Value then --Left.Get(L) /= Right.Get(R) then
                return FALSE;
             else
                Left.Find_Next(L, L_OK);
@@ -189,29 +191,40 @@ package body Utility.Binary_Search_Trees is
 
 
    function Contains
-     (This              : in     Binary_Search_Tree;
+     (This              : in out Binary_Search_Tree;
       Key               : in     Key_Type)
                           return Boolean is
 
+      X                 : RB_Node_Access;
+      
    begin
-      return RB_Find(This.Root, Key) /= null;
+      X := RB_Find(This.Root, Key);
+      if X /= null then
+         This.Last_Find := X;
+      end if;
+      return X /= null;
    end Contains;
    
                           
    function Get
-     (This              : in     Binary_Search_Tree;
+     (This              : in out Binary_Search_Tree;
       Key               : in     Key_Type)
                           return Element_Type is
              
       X                 : RB_Node_Access;
       
    begin
-      X := RB_Find(This.Root, Key);
-      if X = null then
-         raise Binary_Search_Tree_Key_Not_Found;
+      if This.Last_Find /= null and then This.Last_Find.Key = Key then
+         X := This.Last_Find;
       else
-         return X.Value;
+         X := RB_Find(This.Root, Key);
+         if X = null then
+            raise Binary_Search_Tree_Key_Not_Found;
+         else
+            This.Last_Find := X;
+         end if;
       end if;
+      return X.Value;
    end Get;
    
 
@@ -246,6 +259,7 @@ package body Utility.Binary_Search_Trees is
          OK := TRUE;
          X := Create_Node(Key, Value);
          RB_Insert(This.Root, X);
+         This.Last_Find := X;
       end if;
    end Add;
       
@@ -259,11 +273,16 @@ package body Utility.Binary_Search_Trees is
       OK                : Boolean;
       
    begin
-      X := RB_Find(This.Root, Key);
+      if This.Last_Find /= null and then This.Last_Find.Key = Key then
+         X := This.Last_Find;
+      else
+         X := RB_Find(This.Root, Key);
+      end if;
       if X = null then
          This.Add(Key, Value, OK);
       else
          X.Value := Value;
+         This.Last_Find := X;
       end if;
    end Put;
 
@@ -277,6 +296,9 @@ package body Utility.Binary_Search_Trees is
    begin
       X := RB_Find(This.Root, Key);
       if X /= null then
+         if This.Last_Find = X then
+            This.Last_Find := null;
+         end if;
          RB_Delete(This.Root, X);
          Free(X);
       end if;
@@ -284,47 +306,38 @@ package body Utility.Binary_Search_Trees is
    
    
    function First
-     (This              : in     Binary_Search_Tree)
+     (This              : in out Binary_Search_Tree)
                           return Key_Type is
 
-   begin
-      return RB_First(This.Root).Key;
-   end First;
-   
-   
-   procedure Get_First
-     (This              : in     Binary_Search_Tree;
-      Key               : out    Key_Type;
-      Value             : out    Element_Type) is
-      
       X                 : RB_Node_Access;
       
    begin
       X := RB_First(This.Root);
-      Key := X.Key;
-      Value := X.Value;
-   end Get_First;
-
+      This.Last_Find := X;
+      return X.Key;
+   end First;
+   
 
    function Last
-     (This              : in     Binary_Search_Tree)
+     (This              : in out Binary_Search_Tree)
                           return Key_Type is
                           
-   begin
-      return RB_Last(This.Root).Key;
-   end Last;
-   
-   
-   function Is_Last
-     (This              : in     Binary_Search_Tree;
-      Key               : in     Key_Type)
-                          return Boolean is
-
       X                 : RB_Node_Access;
       
    begin
       X := RB_Last(This.Root);
-      return Key = X.Key;
+      This.Last_Find := X;
+      return X.Key;
+   end Last;
+   
+   
+   function Is_Last
+     (This              : in out Binary_Search_Tree;
+      Key               : in     Key_Type)
+                          return Boolean is
+
+   begin
+      return This.Last = Key;
    end Is_Last;
    
          

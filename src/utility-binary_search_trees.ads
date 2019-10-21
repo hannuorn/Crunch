@@ -96,7 +96,7 @@ package Utility.Binary_Search_Trees is
    --    None.
    ---------------------------------------------------------------------
    function Contains
-     (This              : in     Binary_Search_Tree;
+     (This              : in out Binary_Search_Tree;
       Key               : in     Key_Type)
                           return Boolean;
                           
@@ -109,7 +109,7 @@ package Utility.Binary_Search_Trees is
    --    Binary_Search_Tree_Key_Not_Found
    ---------------------------------------------------------------------
    function Get
-     (This              : in     Binary_Search_Tree;
+     (This              : in out Binary_Search_Tree;
       Key               : in     Key_Type)
                           return Element_Type
       with
@@ -183,28 +183,19 @@ package Utility.Binary_Search_Trees is
    --    Binary_Search_Tree_Key_Not_Found
    ---------------------------------------------------------------------
    function First
-     (This              : in     Binary_Search_Tree)
+     (This              : in out Binary_Search_Tree)
                           return Key_Type
       with
          Pre => not This.Is_Empty;
    
-   -- procedure Get_First
-     -- (This              : in     Binary_Search_Tree;
-      -- Key               : out    Key_Type;
-      -- Value             : out    Element_Type)
-      
-      -- with
-         -- Pre => not This.Is_Empty;
-
-
    function Last
-     (This              : in     Binary_Search_Tree)
+     (This              : in out Binary_Search_Tree)
                           return Key_Type
       with
          Pre => not This.Is_Empty;
    
    function Is_Last
-     (This              : in     Binary_Search_Tree;
+     (This              : in out Binary_Search_Tree;
       Key               : in     Key_Type)
                           return Boolean
       with
@@ -289,6 +280,7 @@ private
    type Binary_Search_Tree is new Ada.Finalization.Controlled with
       record
          Root           : RB_Node_Access;
+         Last_Find      : RB_Node_Access;
       end record;
 
 
