@@ -7,6 +7,9 @@
 --
 ------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
+
 package body Deflate.LZ77 is
 
    subtype Tribyte is Byte_Array (1 .. 3);
@@ -28,7 +31,7 @@ package body Deflate.LZ77 is
          Tribyte_Location_Tree_Controlled_Accesses.Controlled_Access;
                
    package Tribyte_Trees is new Utility.Binary_Search_Trees
-     (Tribyte, Tribyte_Location_Tree_Controlled_Access, "<", "=");
+     (Tribyte, Tribyte_Location_Tree_Access, "<", "=");
    
    subtype Tribyte_Tree is Tribyte_Trees.Binary_Search_Tree;
 
@@ -54,6 +57,8 @@ package body Deflate.LZ77 is
      (Input             : in     Dynamic_Byte_Array;
       Output            : out    Dynamic_LLD_Array) is
       
+      procedure Free is new Ada.Unchecked_Deallocation (Tribyte_Location_Tree, Tribyte_Location_Tree_Access);
+      
       use Tribyte_Location_Tree_Controlled_Accesses;
       
       C                 : Natural_64;
@@ -77,13 +82,15 @@ package body Deflate.LZ77 is
          exit when Input.Last - C < 2;
          
          -- Debugging
-         Tritree.Verify;
+--         Tritree.Verify;
          
          -- Find matches
          Matches_Found := FALSE;
          Input.Get(C, Tri);
          if Tritree.Contains(Tri) then
-            Loc := Access_to(Tritree.Get(Tri));
+--            Loc := Access_to(Tritree.Get(Tri));
+            Loc := Tritree.Get(Tri);
+            Loc.Verify;
             
             -- Clean up the location tree, remove locations that are too far
             X := C - Natural_64(Deflate_Distance'Last) - 1;
@@ -91,6 +98,7 @@ package body Deflate.LZ77 is
                Loc.Find_First(L, Found);
                while Found and then L <= X loop
                   Loc.Remove(L);
+                  Loc.Verify;
                   Loc.Find_First(L, Found);
                end loop;
             end if;
@@ -114,6 +122,7 @@ package body Deflate.LZ77 is
                   Loc.Find_Previous(L, Found);
                end loop;
                Loc.Put(C, C);
+               
                LLD := 
                  (Is_Literal  => FALSE,
                   Length      => Longest_Len,
@@ -129,15 +138,19 @@ package body Deflate.LZ77 is
                   
                   Input.Get(I, Tri);
                   if Tritree.Contains(Tri) then
-                     Loc := Access_to(Tritree.Get(Tri));
+--                     Loc := Access_to(Tritree.Get(Tri));
+                     Loc := Tritree.Get(Tri);
                      Loc.Put(I, I);
                   else
-                     Loc_Tree := Create;
-                     Loc := Access_to(Loc_Tree);
+--                     Loc_Tree := Create;
+--                     Loc := Access_to(Loc_Tree);
+                     Loc := new Tribyte_Location_Tree;
                      Loc.Put(I, I);
-                     Tritree.Verify;
-                     Tritree.Put(Tri, Loc_Tree);
-                     Tritree.Verify;
+--                     if C = 34167 then
+--                        Tritree.Verify;
+--                     end if;
+--                     Tritree.Put(Tri, Loc_Tree);
+                     Tritree.Put(Tri, Loc);
                   end if;
                   
                   -- Remove obsoletes
@@ -146,16 +159,21 @@ package body Deflate.LZ77 is
                   if X >= Input.First then
                      Input.Get(X, Tri);
                      if Tritree.Contains(Tri) then
-                        Loc := Access_to(Tritree.Get(Tri));
+                        Loc := Tritree.Get(Tri);
                         Loc.Find_First(L, Found);
                         while Found and then L <= X loop
                            Loc.Remove(L);
+                           Loc.Verify;
                            Loc.Find_First(L, Found);
                         end loop;
                         if Loc.Is_Empty then
-                           Tritree.Verify;
-                           Tritree.Remove(Tri);
-                           Tritree.Verify;
+  --                         if C = 33158 then
+--                              Tritree.Verify;
+--                           end if;
+--                             Tritree.Remove(Tri);
+--                             Free(Loc);
+--                             Tritree.Verify;
+                           null;
                         end if;
                      end if;
                   end if;
@@ -164,12 +182,11 @@ package body Deflate.LZ77 is
                C := C + Natural_64(Longest_Len);
             end if;
          else -- if Tritree.Contains(Tri)
-            Loc_Tree := Create;
-            Loc := Access_to(Loc_Tree);
+--              Loc_Tree := Create;
+--              Loc := Access_to(Loc_Tree);
+            Loc := new Tribyte_Location_Tree;
             Loc.Put(C, C);
-            Tritree.Verify;
-            Tritree.Put(Tri, Loc_Tree);
-            Tritree.Verify;
+            Tritree.Put(Tri, Loc);
          end if;
          if not Matches_Found then
             -- No matches found. Output literal.
@@ -183,16 +200,17 @@ package body Deflate.LZ77 is
             if X >= Input.First then
                Input.Get(X, Tri);
                if Tritree.Contains(Tri) then
-                  Loc := Access_to(Tritree.Get(Tri));
+                  Loc := Tritree.Get(Tri);
                   Loc.Find_First(L, Found);
                   while Found and then L <= X loop
                      Loc.Remove(L);
                      Loc.Find_First(L, Found);
                   end loop;
                   if Loc.Is_Empty then
-                     Tritree.Verify;
-                     Tritree.Remove(Tri);
-                     Tritree.Verify;
+--                       Tritree.Remove(Tri);
+--                       Free(Loc);
+--                       Tritree.Verify;
+                     null;
                   end if;
                end if;
             end if;

@@ -510,10 +510,10 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
          Y_Original_Color := Y.Color;
          X := Y.Right;
          if Y.P = Z then
-            Assert(X.P = Y);
-            -- if X /= null then
-               -- X.P := Y;
-            -- end if;
+            if X /= null then
+               Assert(X.P = Y);
+--                 X.P := Y;
+            end if;
          else
             C := Y.P;
             RB_Transplant(Root, Y, X);
@@ -525,13 +525,13 @@ package body Utility.Binary_Search_Trees.Red_Black_Trees is
                C := C.P;
             end loop;
             Assert(Z.Count - 1 = 1 + Z.Left.Count + Y.Right.Count);
-            Y.Count := Z.Count - 1;
+--              Y.Count := Z.Count - 1;
          end if;
          RB_Transplant(Root, Z, Y);
          Y.Left := Z.Left;
          Y.Left.P := Y;
          Y.Color := Z.Color;
-         Iterative_Update_Count(Y.P);
+         Iterative_Update_Count(Y);
       end if;
       if Y_Original_Color = Black then
          RB_Delete_Fixup(Root, X);

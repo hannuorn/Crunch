@@ -42,7 +42,9 @@ package body Utility.Test is
      (Condition         : in     Boolean) is
      
    begin
-      Ada.Assertions.Assert(Condition);
+      if Condition = FALSE then
+         Ada.Assertions.Assert(Condition);
+      end if;
    end Assert;
    
      
@@ -66,7 +68,9 @@ package body Utility.Test is
       package Natural_Testing is new Utility.Test.Discrete_Types(Natural);
       
    begin
-      Natural_Testing.Assert_Equals(Actual, Expected, Message);
+      if Actual /= Expected then
+         Natural_Testing.Assert_Equals(Actual, Expected, Message);
+      end if;
    end Assert_Equals;
    
 
@@ -78,7 +82,9 @@ package body Utility.Test is
       package Natural_64_Testing is new Utility.Test.Discrete_Types(Natural_64);
       
    begin
-      Natural_64_Testing.Assert_Equals(Actual, Expected, Message);
+      if Actual /= Expected then
+         Natural_64_Testing.Assert_Equals(Actual, Expected, Message);
+      end if;
    end Assert_Equals;
    
    
@@ -90,7 +96,9 @@ package body Utility.Test is
       package Boolean_Testing is new Utility.Test.Discrete_Types(Boolean);
       
    begin
-      Boolean_Testing.Assert_Equals(Actual, Expected, Message);
+      if Actual /= Expected then
+         Boolean_Testing.Assert_Equals(Actual, Expected, Message);
+      end if;
    end Assert_Equals;
    
 
