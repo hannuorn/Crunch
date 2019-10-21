@@ -7,6 +7,7 @@
 --
 ------------------------------------------------------------------------
 
+with Ada.Numerics.Discrete_Random;
 with Utility.Binary_Search_Trees;
 with Utility.Test;            use Utility.Test;
                               use Utility;
@@ -252,6 +253,45 @@ package body Test_Utility.Test_Binary_Search_Trees is
       End_Test;
    end Large_Test_2;
    
+   
+   procedure Random_Test is
+      
+      subtype Key_Type is Natural range 1 .. 5_000_000;
+      package Random is new Ada.Numerics.Discrete_Random (Key_Type);
+      use Random;
+      
+      Verify_Period     : constant Natural := 4247;
+        
+      Gen         : Random.Generator;
+      K           : Key_Type;
+      T           : Natural_Tree;
+      
+   begin
+      Begin_Test("Random_Test");
+      
+      Reset(Gen, 1);
+      for I in 1 .. Key_Type'Last / 5 loop
+         K := Random.Random(Gen);
+         T.Put(K, K);
+         if I mod Verify_Period = 0 then
+            T.Verify;
+         end if;
+      end loop;
+      T.Verify;
+      
+      for I in 1 .. Key_Type'Last / 2 loop
+         K := Random.Random(Gen);
+         if T.Contains(K) then
+            T.Remove(K);
+            if I mod Verify_Period = 0 then
+               T.Verify;
+            end if;
+         end if;
+      end loop;
+
+      End_Test;
+   end Random_Test;
+   
       
    procedure Test is
       
@@ -259,6 +299,7 @@ package body Test_Utility.Test_Binary_Search_Trees is
       Begin_Test("Binary_Search_Trees");
       
       Simple_Test;
+      Random_Test;
       Large_Test_1;
       Large_Test_2;
       
