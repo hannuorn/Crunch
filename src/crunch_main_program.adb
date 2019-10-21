@@ -197,7 +197,7 @@ package body Crunch_Main_Program is
             
             F := Float(Bytes.Length) / Float(1024**2) / Float(After - Before);
             Put("Compressing speed: ");
-            Ada.Float_Text_IO.Put(Item => F, Fore => 3, Aft => 2, Exp => 0);
+            Ada.Float_Text_IO.Put(Item => F, Fore => 1, Aft => 2, Exp => 0);
             Put_Line(" MB/s");
             
             F := Float(Bits.Length) / 8.0 / 1024.0**2;
@@ -220,7 +220,17 @@ package body Crunch_Main_Program is
          elsif Argument(1) = "-d" then
             Put_Line("Decompressing " & Argument(2) & "...");
             Read_File(Argument(2), Bits);
+            
+            Before := Clock;
             Decompress(Bits, Bytes);
+            After := Clock;
+
+            F := Float(Bytes.Length) / Float(1024**2) / Float(After - Before);
+            Put("Decompressing speed: ");
+            Ada.Float_Text_IO.Put(F, Fore => 1, Aft => 2, Exp => 0);
+            Put_Line(" MB/s");
+            Put_Line("");
+            
             Write_File(Argument(2) & "_deco", Bytes);
          elsif Argument(1) = "-lz77" then
             Put_Line("Reading " & Argument(2) & "...");

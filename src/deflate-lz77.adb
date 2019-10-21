@@ -90,7 +90,7 @@ package body Deflate.LZ77 is
          if Tritree.Contains(Tri) then
 --            Loc := Access_to(Tritree.Get(Tri));
             Loc := Tritree.Get(Tri);
-            Loc.Verify;
+--            Loc.Verify;
             
             -- Clean up the location tree, remove locations that are too far
             X := C - Natural_64(Deflate_Distance'Last) - 1;
@@ -98,7 +98,7 @@ package body Deflate.LZ77 is
                Loc.Find_First(L, Found);
                while Found and then L <= X loop
                   Loc.Remove(L);
-                  Loc.Verify;
+--                  Loc.Verify;
                   Loc.Find_First(L, Found);
                end loop;
             end if;
@@ -163,7 +163,7 @@ package body Deflate.LZ77 is
                         Loc.Find_First(L, Found);
                         while Found and then L <= X loop
                            Loc.Remove(L);
-                           Loc.Verify;
+--                           Loc.Verify;
                            Loc.Find_First(L, Found);
                         end loop;
                         if Loc.Is_Empty then
