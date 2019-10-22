@@ -297,9 +297,19 @@ package body Utility.Dynamic_Arrays is
       Values            : in     Fixed_Array) is
       
    begin
-      for I in Values'Range loop
-         Add(This, Values (I));
+      if This.Data'Length = 0 then
+         Enlarge(This, Values'Length);
+      end if;
+      loop
+         exit when Index_Type'Pos(This.Data'First) + This.Length + 
+           Values'Length - 1 <= Index_Type'Pos(This.Data'Last);
+         Enlarge(This);
       end loop;
+      This.Data
+        (Index_Type'Val(Index_Type'Pos(This.Data'First) + This.Length) ..
+         Index_Type'Val(Index_Type'Pos(This.Data'First) + This.Length + 
+               Values'Length - 1)) := Values;
+      This.Length := This.Length + Values'Length;
    end Add;
       
 
@@ -308,7 +318,9 @@ package body Utility.Dynamic_Arrays is
       Values            : in     Dynamic_Array) is
       
    begin
-      Add(This, Values.Get_Array);
+      if not Values.Is_Empty then
+         Add(This, Values.Data (Values.First .. Values.Last));
+      end if;
    end Add;
 
 

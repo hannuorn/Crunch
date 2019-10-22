@@ -67,7 +67,7 @@ package body Deflate.Decompression is
                      (Natural_64(First_Distance(D)) + To_Number(Extra_D_Bits));
                end;
             end;
-            for I in 0 .. Length - 1 loop
+            for I in 0 .. Natural_64(Length) - 1 loop
                X := Output.Last + 1 - Natural_64(Distance);
                B := Output.Get(X);
                Output.Add(B);

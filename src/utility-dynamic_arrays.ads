@@ -217,7 +217,10 @@ package Utility.Dynamic_Arrays is
    procedure Read
      (This              : in     Dynamic_Array;
       Counter           : in out Index_Type;
-      Values            : out    Fixed_Array);
+      Values            : out    Fixed_Array)
+     
+     with
+        Pre => Index_Type'Pos(Counter) + Values'Length - 1 <= Index_Type'Pos(This.Last);
    
    procedure Read
      (This              : in     Dynamic_Array;

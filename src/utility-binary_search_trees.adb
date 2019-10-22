@@ -243,6 +243,20 @@ package body Utility.Binary_Search_Trees is
       return X;
    end Create_Node;
 
+   
+   procedure Add_without_Checking
+     (This              : in out Binary_Search_Tree;
+      Key               : in     Key_Type;
+      Value             : in     Element_Type) is
+      
+      X                 : RB_Node_Access;
+      
+   begin
+      X := Create_Node(Key, Value);
+      RB_Insert(This.Root, X);
+      This.Last_Find := X;
+   end Add_without_Checking;
+   
 
    procedure Add
      (This              : in out Binary_Search_Tree;
@@ -250,16 +264,12 @@ package body Utility.Binary_Search_Trees is
       Value             : in     Element_Type;
       OK                : out    Boolean) is
       
-      X                 : RB_Node_Access;
-      
    begin
       if This.Contains(Key) then
          OK := FALSE;
       else
          OK := TRUE;
-         X := Create_Node(Key, Value);
-         RB_Insert(This.Root, X);
-         This.Last_Find := X;
+         Add_without_Checking(This, Key, Value);
       end if;
    end Add;
       
@@ -270,7 +280,6 @@ package body Utility.Binary_Search_Trees is
       Value             : in     Element_Type) is
       
       X                 : RB_Node_Access;
-      OK                : Boolean;
       
    begin
       if This.Last_Find /= null and then This.Last_Find.Key = Key then
@@ -279,7 +288,7 @@ package body Utility.Binary_Search_Trees is
          X := RB_Find(This.Root, Key);
       end if;
       if X = null then
-         This.Add(Key, Value, OK);
+         Add_without_Checking(This, Key, Value);
       else
          X.Value := Value;
          This.Last_Find := X;

@@ -49,7 +49,8 @@ package body Deflate.Literal_Length_and_Distance is
          when    163 .. 194      => L_and_Extra := (282, 5);
          when    195 .. 226      => L_and_Extra := (283, 5);
          when    227 .. 257      => L_and_Extra := (284, 5);
-         when           258      => L_and_Extra := (285, 0);
+--         when           258      => L_and_Extra := (285, 0);
+         when    258 .. 65793    => L_and_Extra := (285, 16);
       end case;
       Letter := L_and_Extra.L;
       Extra_Bits :=
@@ -183,7 +184,7 @@ package body Deflate.Literal_Length_and_Distance is
 
       CL_Code.Build(CL_Lengths);
 
-      Assert(To_Number(HLIT) + 257 = 286);
+      -- Assert(To_Number(HLIT) + 257 = 286);
       for I in 0 .. To_Number(HLIT) + 257 - 1 loop
          CL_Code.Find(Input, C, Found, L);
          Assert(Found);
@@ -220,6 +221,7 @@ package body Deflate.Literal_Length_and_Distance is
       Dist_Code_Lengths    : constant Distance_Huffman.Huffman_Lengths
         := Distance_Code.Get_Lengths;
 
+      Highest_LL_Letter    : Literal_Length_Letter;
       Len_Counts           : Code_Length_Huffman.Letter_Weights;
       Len                  : Code_Length_Letter;
       CL_Code              : Code_Length_Huffman.Huffman_Code;
@@ -254,8 +256,16 @@ package body Deflate.Literal_Length_and_Distance is
       -- 5 Bits: HLIT, # of Literal/Length codes - 257 (257 - 286)
       -- HLIT_Value := Literal_Length_Code.Number_of_Codewords;
       
-      -- For now, we include all letters
-      HLIT_Value := 286;
+      -- Find the highest LL letter in use
+      Highest_LL_Letter := Literal_Length_Letter'Last;
+      for L in reverse Literal_Length_Letter'Range loop
+         if LL_Code_Lengths(L) > 0 then
+            Highest_LL_Letter := L;
+            exit;
+         end if;
+      end loop;
+      
+      HLIT_Value := Natural_64(Highest_LL_Letter) + 1;
       Output.Add(To_Bits(HLIT_Value - 257, 5));
 
       -- 5 Bits: HDIST, # of Distance codes - 1        (1 - 32)
@@ -269,7 +279,7 @@ package body Deflate.Literal_Length_and_Distance is
       end if;
       
       -- For now, we include all letters
-      HDIST_Value := 30;
+      HDIST_Value := Natural_64(Distance_Letter'Last - Distance_Letter'First + 1);
       Output.Add(To_Bits(HDIST_Value - 1, 5));
 
       -- 4 Bits: HCLEN, # of Code Length codes - 4     (4 - 19)
@@ -305,7 +315,7 @@ package body Deflate.Literal_Length_and_Distance is
       -- HLIT + 257 code lengths for the literal/length alphabet,
       --    encoded using the code length Huffman code
 
-      for L in Literal_Length_Letter loop
+      for L in 0 .. Highest_LL_Letter loop
          Assert(not CL_Codewords(Code_Length_Letter(LL_Code_Lengths(L))).Is_Empty);
          Output.Add(CL_Codewords(Code_Length_Letter(LL_Code_Lengths(L))));
       end loop;

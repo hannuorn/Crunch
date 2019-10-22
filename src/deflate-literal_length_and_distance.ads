@@ -23,7 +23,8 @@ with Deflate.Huffman;
 
 package Deflate.Literal_Length_and_Distance is
 
-   type Deflate_Length is range 3 .. 258;
+   --type Deflate_Length is range 3 .. 258;
+   type Deflate_Length is range 3 .. (258 + 65535);
    --   type Deflate_Distance is range 1 .. 32768;
    -- Deflate64:
    type Deflate_Distance is range 1 .. 65536;
@@ -81,7 +82,7 @@ package Deflate.Literal_Length_and_Distance is
       273 .. 276  => 3,
       277 .. 280  => 4,
       281 .. 284  => 5,
-      285         => 0);
+      285         => 16);
 
 
    First_Length            : constant array (Length_Letter) of Deflate_Length :=

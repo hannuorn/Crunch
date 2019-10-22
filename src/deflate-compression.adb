@@ -80,6 +80,10 @@ package body Deflate.Compression is
       LL_Codewords := LL_Code.Get_Codewords;
       Distance_Code.Build_Length_Limited(15, Distance_Weights);
       
+      -- Demo
+      LL_Code.Print;
+      Literal_Length_Huffman.Print(LL_Codewords);
+      
       -- write block header
       
       Output.Add((1 => BFINAL_1));

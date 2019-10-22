@@ -20,6 +20,7 @@
 with Ada.Calendar;            use Ada.Calendar;
 with Ada.Command_Line;        use Ada.Command_Line;
 with Ada.Direct_IO;
+with Ada.Exceptions;
 with Ada.Float_Text_IO;
 with Ada.Sequential_IO;
 with Ada.Streams;             use Ada.Streams;
@@ -254,6 +255,11 @@ package body Crunch_Main_Program is
       elsif Argument_Count = 2 then
          Crunch_Run;
       end if;
+      
+   exception
+      when E : others =>
+         Put_Line(Ada.Exceptions.Exception_Information(E));
+         
    end Crunch_Main;
    
 
