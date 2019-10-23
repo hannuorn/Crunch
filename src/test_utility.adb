@@ -10,6 +10,7 @@
 with Utility.Test; use Utility.Test;
 with Test_Utility.Test_Dynamic_Arrays;
 with Test_Utility.Test_Binary_Search_Trees;
+with Test_Utility.Test_Linked_Lists;
 
 
 package body Test_Utility is
@@ -18,8 +19,11 @@ package body Test_Utility is
 
    begin
       Begin_Test("Utility");
+      
       Test_Utility.Test_Dynamic_Arrays.Test;
       Test_Utility.Test_Binary_Search_Trees.Test;
+      Test_Utility.Test_Linked_Lists.Test;
+      
       End_Test;
    end Test;
 

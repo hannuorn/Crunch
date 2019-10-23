@@ -8,11 +8,17 @@
 ------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Utility.Hash_Tables;
+with Utility.Linked_Lists;
 
 
 package body Deflate.LZ77 is
 
    subtype Tribyte is Byte_Array (1 .. 3);
+   
+   subtype Quadbyte is Byte_Array (1 .. 4);
+   
+   subtype Match_Key is Quadbyte;
    
    subtype Bytes_X is Byte_Array (1 .. 6);
    
@@ -23,25 +29,56 @@ package body Deflate.LZ77 is
       
    subtype Location_Tree is Location_Trees.Binary_Search_Tree;
    type Location_Tree_Access is access Location_Tree;
-      
+   
+   package Location_Linked_Lists is new Utility.Linked_Lists (Natural_64);
+   use Location_Linked_Lists;
+   subtype Location_List is Location_Linked_Lists.Linked_List;
+   type Location_List_Access is access Location_List;
+   subtype Location_List_Node is Location_Linked_Lists.Linked_List_Node;
+   
    -- Tree of tribytes, given a tribyte, gives list of locations for it
 
-   package Location_Tree_Controlled_Accesses is
-     new Controlled_Accesses (Location_Tree, Location_Tree_Access);
-   use Location_Tree_Controlled_Accesses;
+   package Location_List_Controlled_Accesses is
+     new Controlled_Accesses (Location_List, Location_List_Access);
+   use Location_List_Controlled_Accesses;
    
-   subtype Location_Tree_Controlled_Access is
-         Location_Tree_Controlled_Accesses.Controlled_Access;
+   subtype Location_List_Controlled_Access is
+         Location_List_Controlled_Accesses.Controlled_Access;
                
-   package Tribyte_Trees is new Utility.Binary_Search_Trees
-     (Tribyte, Location_Tree_Controlled_Access, "<", "=");
-   subtype Tribyte_Tree is Tribyte_Trees.Binary_Search_Tree;
+   type Match_Hash_Key is mod 1024;
    
-   package Bytes_X_Trees is new Utility.Binary_Search_Trees
-     (Bytes_X, Location_Tree_Controlled_Access, "<", "=");
-   subtype Bytes_X_Tree is Bytes_X_Trees.Binary_Search_Tree;
+   function Hash
+     (Tri               : in     Match_Key)
+                          return Match_Hash_Key;
+                          
+   package Match_Key_Hash_Tables is new Utility.Hash_Tables
+     (Match_Hash_Key, Match_Key, Location_List_Controlled_Access, "<", "=", Hash);
+   subtype Match_Key_Hash_Table is Match_Key_Hash_Tables.Hash_Table;
    
-   
+
+   function Hash
+     (Tri               : in     Match_Key)
+                          return Match_Hash_Key is
+        
+      N                 : Match_Hash_Key;
+      A                 : Match_Hash_Key;
+      Base              : Match_Hash_Key;
+      
+   begin
+      A := 33;
+      N := 0;
+      Base := 1;
+      N := Match_Hash_Key(Tri(4)) * Base + N;
+      Base := Base*A;
+      N := Match_Hash_Key(Tri(3)) * Base + N;
+      Base := Base*A;
+      N := Match_Hash_Key(Tri(2)) * Base + N;
+      Base := Base*A;
+      N := Match_Hash_Key(Tri(1)) * Base + N;
+      return N;
+   end Hash;
+
+
    function Match_Length
      (Input             : in     Dynamic_Byte_Array;
       C                 : in     Natural_64;
@@ -60,21 +97,20 @@ package body Deflate.LZ77 is
       
    
    procedure Remove_Obsolete_Locations
-     (Locations         : in out Location_Tree;
+     (Locations         : in out Location_List;
       Input             : in     Dynamic_Byte_Array;
       Counter           : in     Natural_64) is
       
       X                 : Integer_64;
-      L                 : Natural_64;
-      Found             : Boolean;
+      N                 : Location_List_Node;
       
    begin
       X := Counter - Natural_64(Deflate_Distance'Last) - 1;
       if X >= Input.First then
-         Locations.Find_First(L, Found);
-         while Found and then L <= X loop
-            Locations.Remove(L);
-            Locations.Find_First(L, Found);
+         N := Locations.First;
+         while not Is_Null(N) and then Value(N) <= X loop
+            Locations.Remove_First;
+            N := Locations.First;
          end loop;
       end if;
    end Remove_Obsolete_Locations;
@@ -83,7 +119,7 @@ package body Deflate.LZ77 is
    procedure Find_Longest_Match
      (Input             : in     Dynamic_Byte_Array;
       C                 : in     Natural_64;
-      Locations         : in out Location_Tree;
+      Locations         : in out Location_List;
       Found             : out    Boolean;
       Length            : out    Deflate_Length;
       Distance          : out    Deflate_Distance) is
@@ -93,7 +129,7 @@ package body Deflate.LZ77 is
       Longest_Loc       : Natural_64;
       L                 : Natural_64;
       Len               : Natural_64;
-      L_Found           : Boolean;
+      N                 : Location_List_Node;
       
    begin
       Found := FALSE;
@@ -102,8 +138,9 @@ package body Deflate.LZ77 is
       if not Locations.Is_Empty then
          Longest_Len := Deflate_Length'First;
          Longest_Loc := C;
-         Locations.Find_Last(L, L_Found);
-         while L_Found loop
+         N := Locations.Last;
+         while not Is_Null(N) loop
+            L := Value(N);
             Len := Match_Length(Input, C, L);
             if C - L <= Natural_64(Deflate_Distance'Last) then
                Found := TRUE;
@@ -114,12 +151,13 @@ package body Deflate.LZ77 is
                      exit;
                   else
                      Longest_Len := Deflate_Length(Len);
+                     --exit when Longest_Len > 10;
                   end if;
                end if;
             else
                exit;
             end if;
-            Locations.Find_Previous(L, L_Found);
+            N := Previous(N);
          end loop;
          if Found then
             Length := Longest_Len;
@@ -134,37 +172,35 @@ package body Deflate.LZ77 is
       Output            : out    Dynamic_LLD_Array) is
       
       procedure Free is new Ada.Unchecked_Deallocation (Location_Tree, Location_Tree_Access);
-      
-      use Location_Tree_Controlled_Accesses;
+      use Location_List_Controlled_Accesses;
       
       C                 : Natural_64;
-      Tri               : Tribyte;
-      Tri_Next          : Tribyte;
-      Tritree           : Tribyte_Tree;
+      Tri               : Match_Key;
+      Tri_Next          : Match_Key;
+      Tritree           : Match_Key_Hash_Table;
       Length            : Deflate_Length;
       Distance          : Deflate_Distance;
---      Length_2          : Deflate_Length;
---      Distance_2        : Deflate_Distance;
+      Length_2          : Deflate_Length;
+      Distance_2        : Deflate_Distance;
       Found             : Boolean;
       LLD               : Literal_Length_Distance;
       B                 : Byte;
       X                 : Integer_64;
       Matches_Found     : Boolean;
-      BX                : Bytes_X;
-      BX_Next           : Bytes_X;
-      BX_Tree           : Bytes_X_Tree;
+      Lazy_Matching     : Boolean;
       
    begin
       C := Input.First;
       loop
-         exit when Input.Last - C < 2;
+         exit when Input.Last - C < Match_Key'Length - 1;
          
          -- Find matches
          Matches_Found := FALSE;
          Input.Get(C, Tri);
+         
          if Tritree.Contains(Tri) then
             declare
-               Locations      : Location_Tree_Access := Access_to(Tritree.Get(Tri));
+               Locations      : Location_List_Access := Access_to(Tritree.Get(Tri));
             begin
                if not Locations.Is_Empty then
                -- Matches found. Find the longest one and output length/distance.
@@ -172,19 +208,19 @@ package body Deflate.LZ77 is
                
                   Find_Longest_Match(Input, C, Locations.all, Found, Length, Distance);
                   
-                  -- "Lazy matching", marginal increase in compression, terrible performance
---                  if Found then
---                     Input.Get(C + 1, Tri_Next);
---                     if Tritree.Contains(Tri_Next) then
---                        Find_Longest_Match(Input, C + 1, Access_to(Tritree.Get(Tri_Next)).all, Found, Length_2, Distance_2);
---                        if Found and then (Length_2 - Length >= 2) then
---                           Matches_Found := FALSE;
---                        end if;
---                     end if;
---                  end if;
+                  Lazy_Matching := FALSE;
+                  if Lazy_Matching and Found then
+                     Input.Get(C + 1, Tri_Next);
+                     if Tritree.Contains(Tri_Next) then
+                        Find_Longest_Match(Input, C + 1, Access_to(Tritree.Get(Tri_Next)).all, Found, Length_2, Distance_2);
+                        if Found and then (Length_2 - Length >= 2) then
+                           Matches_Found := FALSE;
+                        end if;
+                     end if;
+                  end if;
                end if;
 
-               Locations.Put(C, C);
+               Locations.Add_Last(C);
                
                if Matches_Found then
                  LLD := 
@@ -196,30 +232,33 @@ package body Deflate.LZ77 is
                   -- Remove stuff that the skipped distance renders obsolete
                   
                   for I in C + 1 .. C + Natural_64(Length) loop
-                     exit when Input.Last - I < 2;
+                     exit when Input.Last - I < Match_Key'Length - 1;
                      X := I - Natural_64(Deflate_Distance'Last) - 1;
                      if X >= Input.First then
                         Input.Get(X, Tri);
                         if Tritree.Contains(Tri) then
                            Remove_Obsolete_Locations(Access_to(Tritree.Get(Tri)).all, Input, I);
+                           if Access_to(Tritree.Get(Tri)).Is_Empty then
+                              Tritree.Remove(Tri);
+                           end if;
                         end if;
                      end if;
                   end loop;
-                  
+
                   for I in C + 1 .. C + Natural_64(Length) - 1 loop
-                     exit when Input.Last - I < 2;
+                     exit when Input.Last - I < Match_Key'Length - 1;
                      
                      Input.Get(I, Tri);
                      if not Tritree.Contains(Tri) then
                         Tritree.Put(Tri, Create);
                      end if;
-                     Access_to(Tritree.Get(Tri)).Put(I, I);
+                     Access_to(Tritree.Get(Tri)).Add_Last(I);
                   end loop;
                end if;
             end;
          else -- if Tritree.Contains(Tri)
             Tritree.Put(Tri, Create);
-            Access_to(Tritree.Get(Tri)).Put(C, C);
+            Access_to(Tritree.Get(Tri)).Add_Last(C);
          end if;
          
          if Matches_Found then
@@ -237,6 +276,9 @@ package body Deflate.LZ77 is
                Input.Get(X, Tri);
                if Tritree.Contains(Tri) then
                   Remove_Obsolete_Locations(Access_to(Tritree.Get(Tri)).all, Input, C);
+                  if Access_to(Tritree.Get(Tri)).Is_Empty then
+                     Tritree.Remove(Tri);
+                  end if;
                end if;
             end if;
          end if;
@@ -251,7 +293,7 @@ package body Deflate.LZ77 is
             Literal     => B);
          Output.Add(LLD);
       end loop;
-      
+
    end Compress;
 
    
@@ -291,7 +333,6 @@ package body Deflate.LZ77 is
       LLD               : Literal_Length_Distance;
       LL_Letter         : Literal_Length_Letter;
       Dist_Letter       : Distance_Letter;
---      Min_Len_Weight    : Natural_64;
       
    begin
       for I in LLDs.First .. LLDs.Last loop
@@ -306,13 +347,6 @@ package body Deflate.LZ77 is
             Distance_Weights(Dist_Letter) := Distance_Weights(Dist_Letter) + 1;
          end if;
       end loop;
-      
---        -- All literals need to be in the alphabet
---        for L in Literal_Length_Letter range 0 .. 255 loop
---           if LL_Weights(L) = 0 then
---              LL_Weights(L) := 1;
---           end if;
---        end loop;
       
       -- EOB must be in the alphabet
       LL_Weights (End_of_Block) := 1;
@@ -342,6 +376,7 @@ package body Deflate.LZ77 is
             Length_Value_to_Code(LLD.Length, Length_L, Extra_Bits);
             Output.Add(LL_CWs(Length_L));
             Output.Add(Extra_Bits);
+            
             Distance_Value_to_Code(LLD.Distance, Distance_L, Extra_Bits);
             Output.Add(Distance_CWs(Distance_L));
             Output.Add(Extra_Bits);
