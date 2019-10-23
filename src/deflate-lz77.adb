@@ -143,8 +143,8 @@ package body Deflate.LZ77 is
       Tritree           : Tribyte_Tree;
       Length            : Deflate_Length;
       Distance          : Deflate_Distance;
-      Length_2          : Deflate_Length;
-      Distance_2        : Deflate_Distance;
+--      Length_2          : Deflate_Length;
+--      Distance_2        : Deflate_Distance;
       Found             : Boolean;
       LLD               : Literal_Length_Distance;
       B                 : Byte;
@@ -157,7 +157,7 @@ package body Deflate.LZ77 is
    begin
       C := Input.First;
       loop
-         exit when Input.Last - C < 3;
+         exit when Input.Last - C < 2;
          
          -- Find matches
          Matches_Found := FALSE;
@@ -171,15 +171,17 @@ package body Deflate.LZ77 is
                   Matches_Found := TRUE;
                
                   Find_Longest_Match(Input, C, Locations.all, Found, Length, Distance);
-                  if Found then
-                     Input.Get(C + 1, Tri_Next);
-                     if Tritree.Contains(Tri_Next) then
-                        Find_Longest_Match(Input, C + 1, Access_to(Tritree.Get(Tri_Next)).all, Found, Length_2, Distance_2);
-                        if Found and then (Length_2 - Length >= 2) then
-                           Matches_Found := FALSE;
-                        end if;
-                     end if;
-                  end if;
+                  
+                  -- "Lazy matching", marginal increase in compression, terrible performance
+--                  if Found then
+--                     Input.Get(C + 1, Tri_Next);
+--                     if Tritree.Contains(Tri_Next) then
+--                        Find_Longest_Match(Input, C + 1, Access_to(Tritree.Get(Tri_Next)).all, Found, Length_2, Distance_2);
+--                        if Found and then (Length_2 - Length >= 2) then
+--                           Matches_Found := FALSE;
+--                        end if;
+--                     end if;
+--                  end if;
                end if;
 
                Locations.Put(C, C);
