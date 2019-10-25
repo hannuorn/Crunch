@@ -1,23 +1,29 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
 with Ada.Finalization;
 
 
 generic
 
    type Object is limited private;
-   type Name is access Object;
+   type Object_Access is access Object;
    
    
 package Utility.Controlled_Accesses is
 
    type Controlled_Access is tagged private;
 
-   procedure Assume_Control
-     (This                 : out    Controlled_Access;
-      X                    : in     Name);
-     
+
    function Access_to
      (This                 : in     Controlled_Access)
-                             return Name;
+                             return Object_Access;
 
    function Create           return Controlled_Access;
    
@@ -26,8 +32,8 @@ private
 
    type Counter is
       record
-         Count             : Natural;
-         Data              : Name;
+         Count             : Positive_64;
+         Data              : Object_Access;
       end record;
    type Counter_Access is access Counter;
    

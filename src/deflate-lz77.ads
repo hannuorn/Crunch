@@ -26,9 +26,12 @@ package Deflate.LZ77 is
                Length               : Deflate_Length;
                Distance             : Deflate_Distance;
          end case;
-      end record;
+      end record
+      with Size => 48;
+      
    
-   type LLD_Array is array (Natural_64 range <>) of Literal_Length_Distance;
+   type LLD_Array is array (Natural_64 range <>) of Literal_Length_Distance
+     with Component_Size => 48;
    
    Empty_LLD_Array            : constant LLD_Array (1 .. 0) := 
      (others => (TRUE, 0));

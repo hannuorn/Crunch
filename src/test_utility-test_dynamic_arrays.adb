@@ -24,7 +24,7 @@ package body Test_Utility.Test_Dynamic_Arrays is
       B                 : Natural_Dynamic_Array;
 
    begin
-      Begin_Test("Basic_Test");
+      Begin_Test("Basic_Test", Is_Leaf => True);
       
       -- A should be empty
       Assert(A.Is_Empty);
@@ -91,18 +91,18 @@ package body Test_Utility.Test_Dynamic_Arrays is
          Assert(A.Get(Index => I) = 2 * I + 1);
       end loop;
       
-      End_Test;
+      End_Test(Is_Leaf => True);
    end Basic_Test;
 
 
    procedure Test is
       
    begin
-      Begin_Test("Dynamic_Arrays");
+      Begin_Test("Dynamic_Arrays", Is_Leaf => False);
       
       Basic_Test;
       
-      End_Test;
+      End_Test(Is_Leaf => False);
    end Test;
    
 end Test_Utility.Test_Dynamic_Arrays;

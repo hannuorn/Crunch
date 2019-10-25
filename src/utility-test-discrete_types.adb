@@ -20,7 +20,7 @@ package body Utility.Test.Discrete_Types is
       
    begin
       if not (Actual = Expected) then
-         Print(
+         Utility.Test.Put_Line(
             Message & 
             ", expected = " & Discrete_Type'Image(Expected) & 
             ", actual = "   & Discrete_Type'Image(Actual));

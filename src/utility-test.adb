@@ -10,7 +10,7 @@
 pragma Assertion_Policy(Check);
 
 with Ada.Assertions;
-with Ada.Text_IO;       use Ada.Text_IO;
+with Ada.Text_IO;
 with Utility.Test.Discrete_Types;
 
 
@@ -30,13 +30,21 @@ package body Utility.Test is
    end Indent;
    
 
-   procedure Print
+   procedure Put_Line
      (S                 : in     String) is
      
    begin
-      Put_Line(Indent & S);
-   end Print;
+      Ada.Text_IO.Put_Line(Indent & S);
+   end Put_Line;
    
+
+   procedure Put
+     (S                 : in     String) is
+     
+   begin
+      Ada.Text_IO.Put(Indent & S);
+   end Put;
+
 
    procedure Assert
      (Condition         : in     Boolean) is
@@ -54,7 +62,7 @@ package body Utility.Test is
       
    begin
       if Condition = FALSE then
-         Print("ASSERT FAILURE: " & Message);
+         Put_Line("ASSERT FAILURE: " & Message);
       end if;
       Ada.Assertions.Assert(Condition);
    end Assert;
@@ -103,18 +111,29 @@ package body Utility.Test is
    
 
    procedure Begin_Test
-     (Title             : in     String) is
+     (Title             : in     String;
+      Is_Leaf           : in     Boolean) is
 
    begin
-      Print(Title);
-      Indent_Count := Indent_Count + 1;
+      if Is_Leaf then
+         Put(Title & "... ");
+      else
+         Put_Line(Title);
+         Indent_Count := Indent_Count + 1;
+      end if;
    end Begin_Test;
    
   
-   procedure End_Test is
+   procedure End_Test
+     (Is_Leaf           : in     Boolean) is
    
    begin
-      Indent_Count := Indent_Count - 1;
+      if Is_Leaf then
+         Ada.Text_IO.Put_Line("ok");
+      else
+         Ada.Text_IO.Put_Line("");
+         Indent_Count := Indent_Count - 1;
+      end if;
    end End_Test;
    
 

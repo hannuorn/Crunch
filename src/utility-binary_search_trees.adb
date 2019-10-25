@@ -93,6 +93,7 @@ package body Utility.Binary_Search_Trees is
      
    begin
       Free_Subtree(Object.Root);
+      Object.Last_Find := null;
    end Finalize;
 
 
@@ -105,17 +106,17 @@ package body Utility.Binary_Search_Trees is
 
    begin
       if Left.Size /= Right.Size then
-         return FALSE;
+         return False;
       elsif Left.Size = 0 then
-         return TRUE;
+         return True;
       else
          Left.Find_First(L, L_OK);
          Right.Find_First(R, R_OK);
          loop
             if L /= R then
-               return FALSE;
-            elsif RB_Find(Left.Root, L).Value /= RB_Find(Right.Root, L).Value then --Left.Get(L) /= Right.Get(R) then
-               return FALSE;
+               return False;
+            elsif RB_Find(Left.Root, L).Value /= RB_Find(Right.Root, L).Value then
+               return False;
             else
                Left.Find_Next(L, L_OK);
                Right.Find_Next(R, R_OK);
@@ -123,7 +124,7 @@ package body Utility.Binary_Search_Trees is
             exit when not L_OK;
          end loop;
       end if;
-      return TRUE;
+      return True;
    end "=";
 
 
@@ -138,7 +139,7 @@ package body Utility.Binary_Search_Trees is
       Left.Find_First(L, L_OK);
       Right.Find_First(R, R_OK);
       if not L_OK and not L_OK then
-         return FALSE;
+         return False;
       elsif L_OK /= R_OK then
          return Left.Size < Right.Size;
       else
@@ -149,7 +150,7 @@ package body Utility.Binary_Search_Trees is
                Left.Find_Next(L, L_OK);
                Right.Find_Next(R, R_OK);
                if not L_OK and not R_OK then
-                  return FALSE;
+                  return False;
                elsif L_OK /= R_OK then
                   return Left.Size < Right.Size;
                end if;
@@ -198,11 +199,15 @@ package body Utility.Binary_Search_Trees is
       X                 : RB_Node_Access;
       
    begin
-      X := RB_Find(This.Root, Key);
-      if X /= null then
-         This.Last_Find := X;
+      if This.Last_Find /= null and then This.Last_Find.Key = Key then
+         return True;
+      else
+         X := RB_Find(This.Root, Key);
+         if X /= null then
+            This.Last_Find := X;
+         end if;
+         return X /= null;
       end if;
-      return X /= null;
    end Contains;
    
                           
@@ -266,9 +271,9 @@ package body Utility.Binary_Search_Trees is
       
    begin
       if This.Contains(Key) then
-         OK := FALSE;
+         OK := False;
       else
-         OK := TRUE;
+         OK := True;
          Add_without_Checking(This, Key, Value);
       end if;
    end Add;
@@ -386,10 +391,10 @@ package body Utility.Binary_Search_Trees is
    begin
       X := RB_First(This.Root);
       if X = null then
-         Found := FALSE;
+         Found := False;
       else
          Key := X.Key;
-         Found := TRUE;
+         Found := True;
       end if;
    end Find_First;
 
@@ -404,10 +409,10 @@ package body Utility.Binary_Search_Trees is
    begin
       X := RB_Last(This.Root);
       if X = null then
-         Found := FALSE;
+         Found := False;
       else
          Key := X.Key;
-         Found := TRUE;
+         Found := True;
       end if;
    end Find_Last;
 
@@ -422,10 +427,10 @@ package body Utility.Binary_Search_Trees is
    begin
       X := RB_Next(This.Root, Key);
       if X = null then
-         Found := FALSE;
+         Found := False;
       else
          Key := X.Key;
-         Found := TRUE;
+         Found := True;
       end if;
    end Find_Next;
 
@@ -440,10 +445,10 @@ package body Utility.Binary_Search_Trees is
    begin
       X := RB_Previous(This.Root, Key);
       if X = null then
-         Found := FALSE;
+         Found := False;
       else
          Key := X.Key;
-         Found := TRUE;
+         Found := True;
       end if;
    end Find_Previous;
 

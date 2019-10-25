@@ -1,3 +1,12 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
 with Ada.Finalization;
 with Utility.Binary_Search_Trees;
 

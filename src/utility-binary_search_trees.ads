@@ -266,6 +266,7 @@ private
    
    type RB_Node;
    type RB_Node_Access is access RB_Node;
+   
    type RB_Node is
       record
          P              : RB_Node_Access;
@@ -281,7 +282,8 @@ private
       record
          Root           : RB_Node_Access;
          Last_Find      : RB_Node_Access;
-      end record;
+      end record
+     with Size => 192;
 
 
    procedure Initialize

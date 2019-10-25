@@ -8,6 +8,7 @@
 ------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Text_IO; use Ada.Text_IO;
 with Utility.Hash_Tables;
 with Utility.Linked_Lists;
 
@@ -45,7 +46,7 @@ package body Deflate.LZ77 is
    subtype Location_List_Controlled_Access is
          Location_List_Controlled_Accesses.Controlled_Access;
                
-   type Match_Hash_Key is mod 1024;
+   type Match_Hash_Key is mod 65536;
    
    function Hash
      (Tri               : in     Match_Key)
@@ -103,15 +104,21 @@ package body Deflate.LZ77 is
       
       X                 : Integer_64;
       N                 : Location_List_Node;
+      R                 : Natural_64;
       
    begin
       X := Counter - Natural_64(Deflate_Distance'Last) - 1;
       if X >= Input.First then
          N := Locations.First;
+         R := 0;
          while not Is_Null(N) and then Value(N) <= X loop
+            R := R + 1;
             Locations.Remove_First;
             N := Locations.First;
          end loop;
+         if R > 1 then
+            Put_Line("Removed " & Natural_64'Image(R) & " locations in one go...");
+         end if;
       end if;
    end Remove_Obsolete_Locations;
    
@@ -190,6 +197,7 @@ package body Deflate.LZ77 is
       Lazy_Matching     : Boolean;
       
    begin
+      Output.Expect_Size(Input.Length / 10);
       C := Input.First;
       loop
          exit when Input.Last - C < Match_Key'Length - 1;

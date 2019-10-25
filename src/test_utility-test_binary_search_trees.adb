@@ -18,8 +18,8 @@ package body Test_Utility.Test_Binary_Search_Trees is
    package Natural_Trees is new Utility.Binary_Search_Trees
      (Key_Type       => Natural, 
       Element_Type   => Natural,
-      "<" => "<", 
-      "=" => "=");
+      "<"            => "<", 
+      "="            => "=");
       
    use Natural_Trees;
    subtype Natural_Tree is Natural_Trees.Binary_Search_Tree;
@@ -35,7 +35,7 @@ package body Test_Utility.Test_Binary_Search_Trees is
       X                 : Natural;
       
    begin
-      Begin_Test("Simple_Test");
+      Begin_Test("Simple_Test", Is_Leaf => True);
       
       -- Empty trees should be equal
       Assert(T1 = T2);
@@ -111,7 +111,7 @@ package body Test_Utility.Test_Binary_Search_Trees is
       end loop;
       Assert_Equals(T1.Is_Empty, TRUE, "Is_Empty");
       
-      End_Test;
+      End_Test(Is_Leaf => True);
    end Simple_Test;
 
 
@@ -124,7 +124,7 @@ package body Test_Utility.Test_Binary_Search_Trees is
       S                 : Natural;
       
    begin
-      Begin_Test("Large_Test_1");
+      Begin_Test("Large_Test_1", Is_Leaf => True);
       -- Large_Test_1: Add and remove a large amount of nodes
       -- in various patterns. Verify tree integrity occasionally.
       
@@ -210,7 +210,7 @@ package body Test_Utility.Test_Binary_Search_Trees is
       end loop;
       Assert_Equals(T1.Is_Empty, TRUE, "Is_Empty");
 
-      End_Test;
+      End_Test(Is_Leaf => True);
    end Large_Test_1;
    
    
@@ -222,7 +222,7 @@ package body Test_Utility.Test_Binary_Search_Trees is
       Found             : Boolean;
       
    begin
-      Begin_Test("Large_Test_2");
+      Begin_Test("Large_Test_2", Is_Leaf => True);
       -- Test tree enumeration by Find_First/Find_Next
       
       for I in 1 .. N loop
@@ -250,7 +250,7 @@ package body Test_Utility.Test_Binary_Search_Trees is
       end loop;
       Assert_Equals(T1.Is_Empty, TRUE, "Is_Empty");
       
-      End_Test;
+      End_Test(Is_Leaf => True);
    end Large_Test_2;
    
    
@@ -267,7 +267,7 @@ package body Test_Utility.Test_Binary_Search_Trees is
       T           : Natural_Tree;
       
    begin
-      Begin_Test("Random_Test");
+      Begin_Test("Random_Test", Is_Leaf => True);
       
       Reset(Gen, 1);
       for I in 1 .. Key_Type'Last / 5 loop
@@ -289,21 +289,21 @@ package body Test_Utility.Test_Binary_Search_Trees is
          end if;
       end loop;
 
-      End_Test;
+      End_Test(Is_Leaf => True);
    end Random_Test;
    
       
    procedure Test is
       
    begin
-      Begin_Test("Binary_Search_Trees");
+      Begin_Test("Binary_Search_Trees", Is_Leaf => False);
       
       Simple_Test;
       Random_Test;
       Large_Test_1;
       Large_Test_2;
       
-      End_Test;
+      End_Test(Is_Leaf => False);
    end Test;
    
 

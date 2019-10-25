@@ -1,3 +1,12 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
 with Ada.Assertions;
 with Ada.Text_IO;       use Ada.Text_IO;
 with Utility.Test;      use Utility.Test;
@@ -279,11 +288,6 @@ package body Deflate.Literals_Only_Huffman is
             X := X + 1;
          end if;
       end loop;
-
-
-   exception
-      when Ada.Assertions.Assertion_Error =>
-         Put_Line("Decompress assertion error...");
 
    end Decompress_Single_Block;
 

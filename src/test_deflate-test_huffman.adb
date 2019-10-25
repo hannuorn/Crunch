@@ -30,7 +30,7 @@ package body Test_Deflate.Test_Huffman is
       CL_Codewords      : CL_Huffman.Huffman_Codewords;
 
    begin
-      Begin_Test("Test_Case_1");
+      Begin_Test("Test_Case_1", Is_Leaf => True);
       
       Weights :=
         (0  => 21,
@@ -69,7 +69,7 @@ package body Test_Deflate.Test_Huffman is
          end loop;
       end if;
       
-      End_Test;
+      End_Test(Is_Leaf => True);
    end Test_Case_1;
    
 
@@ -81,7 +81,7 @@ package body Test_Deflate.Test_Huffman is
       HC                : Byte_Huffman.Huffman_Code;
       
    begin
-      Begin_Test("Basic_Test");
+      Begin_Test("Basic_Test", Is_Leaf => True);
       
       -- Even distribution should make every codeword 8 bits long.
       Weights := (others => 1);
@@ -132,19 +132,19 @@ package body Test_Deflate.Test_Huffman is
          end;
       end loop;
 
-      End_Test;
+      End_Test(Is_Leaf => True);
    end Basic_Test;
    
    
    procedure Test is
    
    begin
-      Begin_Test("Huffman");
+      Begin_Test("Huffman", Is_Leaf => False);
       
       Basic_Test;
       Test_Case_1;
       
-      End_Test;
+      End_Test(Is_Leaf => False);
    end Test;
 
 end Test_Deflate.Test_Huffman;

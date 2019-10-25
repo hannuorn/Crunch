@@ -10,7 +10,7 @@
 with Utility.Dynamic_Arrays;
 
 
-package Test_Utility.Test_Dynamic_Arrays is
+private package Test_Utility.Test_Dynamic_Arrays is
 
    type Natural_Array is array (Positive range <>) of Natural;
    Empty_Natural_Array  : Natural_Array (1 .. 0) := (others => 0);

@@ -1,3 +1,12 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
 with Ada.Text_IO;             use Ada.Text_IO;
 with Utility.Test;            use Utility.Test;
 
@@ -49,8 +58,8 @@ package body Deflate.Literal_Length_and_Distance is
          when    163 .. 194      => L_and_Extra := (282, 5);
          when    195 .. 226      => L_and_Extra := (283, 5);
          when    227 .. 257      => L_and_Extra := (284, 5);
---         when           258      => L_and_Extra := (285, 0);
-         when    258 .. 65793    => L_and_Extra := (285, 16);
+         when           258      => L_and_Extra := (285, 0);
+--         when    258 .. 65793    => L_and_Extra := (285, 16);
       end case;
       Letter := L_and_Extra.L;
       Extra_Bits :=
@@ -105,8 +114,8 @@ package body Deflate.Literal_Length_and_Distance is
          when  16385 .. 24576    => L_and_Extra := (28, 13);
          when  24577 .. 32768    => L_and_Extra := (29, 13);
             -- Deflate64
-         when  32769 .. 49152    => L_and_Extra := (30, 14);
-         when  49153 .. 65536    => L_and_Extra := (31, 14);
+--         when  32769 .. 49152    => L_and_Extra := (30, 14);
+--         when  49153 .. 65536    => L_and_Extra := (31, 14);
       end case;
       Letter := L_and_Extra.L;
       Extra_Bits :=

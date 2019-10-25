@@ -1,41 +1,41 @@
+------------------------------------------------------------------------
+--
+--       Copyright (c) 2019, Hannu Örn
+--       All rights reserved.
+--
+-- Author: Hannu Örn
+--
+------------------------------------------------------------------------
+
 with Ada.Unchecked_Deallocation;
 
 
 package body Utility.Controlled_Accesses is
 
 
-   procedure Assume_Control
-     (This                 : out    Controlled_Access;
-      X                    : in     Name) is
-      
-   begin
-      This.Counter := new Counter;
-      This.Counter.Count := 1;
-      This.Counter.Data := X;
-   end Assume_Control;
-   
-
    function Access_to
      (This                 : in     Controlled_Access)
-                             return Name is
+                             return Object_Access is
                              
    begin
       return This.Counter.Data;
    end Access_to;
-   
-   
+
+
    function Create           return Controlled_Access is
-   
-      X                    : Name;
+
+      X                    : Object_Access;
       CA                   : Controlled_Access;
-      
+
    begin
       X := new Object;
-      Assume_Control(CA, X);
+      CA.Counter := new Counter;
+      CA.Counter.Count := 1;
+      CA.Counter.Data := X;
       return CA;
    end Create;
-   
-   
+
+
    procedure Initialize
      (This                 : in out Controlled_Access) is
      
@@ -60,18 +60,15 @@ package body Utility.Controlled_Accesses is
       procedure Free is new Ada.Unchecked_Deallocation
             (Counter, Counter_Access);
       procedure Free is new Ada.Unchecked_Deallocation
-            (Object, Name);
-            
-      C                    : Natural;
-      
+            (Object, Object_Access);
+
    begin
       if This.Counter /= null then
-         C := This.Counter.Count;
-         if C = 1 then
+         if This.Counter.Count = 1 then
             Free(This.Counter.Data);
             Free(This.Counter);
          else
-            This.Counter.Count := C - 1;
+            This.Counter.Count := This.Counter.Count - 1;
          end if;
       end if;
    end Finalize;

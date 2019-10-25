@@ -43,8 +43,6 @@ package Deflate.Huffman is
 
    type Huffman_Code is tagged private;
 
-
-   
    
    function Number_of_Codewords
      (Code              : in     Huffman_Code)
@@ -55,7 +53,7 @@ package Deflate.Huffman is
    --
    -- Purpose:
    --    This procedure builds an optimal Huffman code
-   --    given the frequency of each Letter_Type.
+   --    given the frequency of each letter.
    ------------------------------------------------------------------------
    procedure Build
      (Code              : out    Huffman_Code;
@@ -118,10 +116,10 @@ package Deflate.Huffman is
 
    procedure Print
      (Lengths           : in     Huffman_Lengths);
-     
+
    procedure Print
      (Codewords         : in     Huffman_Codewords);
-     
+
    procedure Print
      (Code              : in     Huffman_Code);
 

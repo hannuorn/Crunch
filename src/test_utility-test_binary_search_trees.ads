@@ -7,7 +7,7 @@
 --
 ------------------------------------------------------------------------
 
-package Test_Utility.Test_Binary_Search_Trees is
+private package Test_Utility.Test_Binary_Search_Trees is
 
    procedure Test;
 

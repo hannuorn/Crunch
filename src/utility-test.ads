@@ -42,11 +42,13 @@ package Utility.Test is
       Message           : in     String);
    
    procedure Begin_Test
-     (Title             : in     String);
-  
-   procedure End_Test;
+     (Title             : in     String;
+      Is_Leaf           : in     Boolean);
+      
+   procedure End_Test
+     (Is_Leaf           : in     Boolean);
 
-   procedure Print
+   procedure Put_Line
      (S                 : in     String);
      
 end Utility.Test;

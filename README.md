@@ -4,6 +4,7 @@ Deflate compression tool in Ada 2012.
 
 ### Documentation
 
+* [User's Guide](doc/guide.md)
 * [Design](doc/design.md)
 * [Implementation](doc/implementation.md)
 * [Testing](doc/testing.md)

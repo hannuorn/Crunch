@@ -40,11 +40,36 @@ with Deflate.LZ77;            use Deflate.LZ77;
 package body Crunch_Main_Program is
 
 
+   procedure Crunch_Instructions is
+   
+   begin
+      Put_Line("Crunch compresses or decompresses a file.");
+      Put_Line("");
+      Put_Line("To compress:");
+      Put_Line("");
+      Put_Line("    crunch -c [filename]");
+      Put_Line("");
+      Put_Line("Compressed file is written to [filename].crunch.");
+      Put_Line("");
+      Put_Line("");
+      Put_Line("To decompress:");
+      Put_Line("");
+      Put_Line("    crunch -d [filename]");
+      Put_Line("");
+      Put_Line("Decompressed file is written to [filename].decrunch.");
+      Put_Line("");
+      Put_Line("");
+      Put_Line("To run unit tests:");
+      Put_Line("");
+      Put_Line("    crunch -test");
+      Put_Line("");
+   end Crunch_Instructions;
+   
+
    procedure Crunch_Test is
    
    begin
-      Put_Line("Crunch - test mode");
-      Put_Line("Running unit tests...");
+      Put_Line("Crunch - unit testing");
       Put_Line("");
       Test_Utility.Test;
       Test_Deflate.Test;
@@ -217,8 +242,8 @@ package body Crunch_Main_Program is
             
             Put_Line("");
             
-            Put_Line("Writing _crunch file...");
-            Write_File(Argument(2) & "_crunch", Bits);
+            Put_Line("Writing " & Argument(2) & ".crunch ...");
+            Write_File(Argument(2) & ".crunch", Bits);
          elsif Argument(1) = "-d" then
             Put_Line("Decompressing " & Argument(2) & "...");
             Read_File(Argument(2), Bits);
@@ -233,13 +258,14 @@ package body Crunch_Main_Program is
             Put_Line(" MB/s");
             Put_Line("");
             
-            Write_File(Argument(2) & "_deco", Bytes);
+            Put_Line("Writing " & Argument(2) & ".decrunch ...");
+            Write_File(Argument(2) & ".decrunch", Bytes);
          elsif Argument(1) = "-lz" then
             Put_Line("Reading " & Argument(2) & "...");
             Before := Clock;
             Read_File_as_Bytes(Argument(2), Bytes);
             Get_LZ_Text_Results(Bytes, LZ_Text);
-            Write_File(Argument(2) & "_crunch_LZ", LZ_Text);
+            Write_File(Argument(2) & ".crunch_LZ", LZ_Text);
          end if;
       end if;
    end Crunch_Run;
@@ -254,6 +280,8 @@ package body Crunch_Main_Program is
          Crunch_Demo;
       elsif Argument_Count = 2 then
          Crunch_Run;
+      else
+         Crunch_Instructions;
       end if;
       
    exception
