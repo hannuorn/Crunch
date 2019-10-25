@@ -87,6 +87,40 @@ the "literal-length alphabet" has 285 symbols and the limit for bit length is 15
 Performance is therefore a non-issue.
 
 
+### Lempel-Ziv
+
+Instead of 3-byte sequences as suggested in RFC 1951, Crunch uses 4-byte sequences,
+"quadbytes", to recognise repeated strings. 3-byte sequences were tried, but they
+were significantly slower (due to a much higher amount of 3-byte matches) 
+and offered no improvement in compression ratio.
+
+Every quadbyte encountered is put into a hash table, along with a list of locations
+where the quadbyte was found. The list of locations is continuously maintained so
+that locations that are outside the 32K sliding window are removed.
+A longest possible match is always determined within sliding window. In other
+words, the implementation aims for maximum compression at the cost of performance.
+
+The "lazy matching" method suggested in Deflate specification was tried, but is
+not used.
+
+
+### Huffman codes
+
+Below, the term 'codeword' is used for the sequence of bits that represent a symbol,
+and the term 'letter' is used for a symbol. The term 'Huffman code' is used
+to represent the entire collection of codewords and corresponding letters.
+
+Once the Huffman code is built, it is represented as a table giving the codeword
+for each letter (encoding), and a tree allowing for quick decoding of a
+codeword to the corresponding letter.
+
+The third way of representing a Huffman code is a sequence of
+bit lengths, as per Deflate specification. This format is also what the
+Package-Merge algorithm produces as its output.
+
+The method given in RFC 1951 3.2.2. is used to build the codewords from the sequence of bit lengths.
+
+
 ## Code Style
 
 Guidelines of *Ada Style Guide* are followed. The code has been designed to
